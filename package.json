@@ -1,0 +1,13 @@
+{
+  "name": "root",
+  "private": false,
+  "devDependencies": {
+  },
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "build": "lerna run build",
+    "link-packages": "lerna link",
+    "publish-packages": "./scripts/publish.sh",
+    "test": "./scripts/test.sh"
+  }
+}
