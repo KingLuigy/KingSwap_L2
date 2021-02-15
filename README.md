@@ -1,15 +1,19 @@
-**The KingSwap Layer2 is a work in progress and has NOT been audited. Use at your own risk.**
+**The "KingSwap Layer2 DApp" is a work in progress and has NOT been audited. Use at your own risk.**
 
 ## Documentation
-https://... /
+See [./docs](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/docs).
 
 ## Packages
 
-This is a monorepo containing all packages related to the KingSwap.L2 DApp.
+This is a monorepo containing all packages related to the "KingSwap Layer2 DApp".
 
 | Package                                                                          | Description                                                                    |
 |----------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| [`KingSwap_NFT`](https://github.com/.../tree/master/packages/protocol) | Contains the Solidity implementation of the /// |
+| [kingswapBridge](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapBridge/ ) | Mediators for xDai <-> Ethereum bridge |
+| [kingswapErc1155](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapErc1155/ ) | ERC1155 for Ethereum and xDai networks |
+| [kingswapUni](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapUni/ ) | Uniswap v2 (SakeSwap version) clone to run on xDai network |
+| [kingswapV3](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapV3/ ) | KingSwap V2 staking/deposit smart contracts to run on xDai network |
+| [kingToken](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingToken/ ) | $KING token counterpart that runs on xDai network |
 
 ## Development
 ### Requirements
