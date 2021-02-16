@@ -51,7 +51,7 @@ shutdown_ganache() {
 }
 
 ganache_port=8555
-networkId=2020
+networkId=2021
 echo "Starting ganache-cli (port: ${ganache_port}, networkId: ${networkId})"
 npx --quiet ganache-cli \
   --port "${ganache_port}" \

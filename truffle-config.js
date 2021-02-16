@@ -11,19 +11,19 @@ module.exports = {
       host: 'localhost',
       port: 8545,
       gas: 6999999,
-      gasPrice: 1000000000,
-      network_id: '*'
+      gasPrice: 1e9,
+      network_id: '*',
     },
 
-    ksw: {
+    ksw: { // Local testnet
       host: 'localhost',
       port: 8555,
       gas: 6999999,
-      gasPrice: 20 * 1000000000,
-      network_id: '*'
+      gasPrice: 20e9,
+      network_id: 2021,
     },
 
-    rinkeby: {
+    kovan: { // Testnet simulating the mainnet
       provider: () => new HDWalletProvider(
         process.env.HDWALLET_MNEMONIC,
         process.env.INFURA_PROVIDER_URL,
@@ -31,10 +31,20 @@ module.exports = {
       skipDryRun: true,
       network_id: 4,
       gas: 6980000,
-      gasPrice: 2.001 * 1000000000
+      gasPrice: 2.001e9,
     },
 
-    mainnet: {
+    sokol: { // Testnet simulating the xDai
+      provider: () => new HDWalletProvider(
+          process.env.HDWALLET_MNEMONIC,
+          'https://sokol.poa.network',
+      ),
+      network_id: 77,
+      gas: 6999999,
+      gasPrice: 1e9,
+    },
+
+    mainnet: { // Production main chain
       provider: () => new HDWalletProvider(
         process.env.HDWALLET_MNEMONIC,
         process.env.INFURA_PROVIDER_URL_MAINNET,
@@ -42,35 +52,17 @@ module.exports = {
       skipDryRun: true,
       network_id: 1,
       gas: 7000000,
-      gasPrice: 3.01 * 1000000000
+      gasPrice: 30e9,
     },
 
-    kovan: {
+    xdai: { // Production side-chain
       provider: () => new HDWalletProvider(
         process.env.HDWALLET_MNEMONIC,
-        process.env.INFURA_PROVIDER_URL_KOVAN,
+        process.env.XDAI_PROVIDER || 'https://dai.poa.network',
       ),
-      skipDryRun: true,
-      network_id: 42
-    },
-
-    mainnet_fork: {
-      provider: () => new HDWalletProvider(
-        process.env.HDWALLET_MNEMONIC,
-        process.env.LOCALHOST_URL,
-      ),
-      gas: 7000000,
-      network_id: 999
-      // gasPrice: 11.101 * 1000000000
-    },
-
-    xdai: {
-      provider: () => new HDWalletProvider(
-        process.env.HDWALLET_MNEMONIC,
-        process.env.XDAI_PROVIDER || 'https://rpc.xdaichain.com/',
-      ),
-      gas: 7000000,
-      network_id: 100
+      network_id: 100,
+      gas: 6999999,
+      gasPrice: 1e9,
     }
   },
 
@@ -107,5 +99,5 @@ module.exports = {
       currency: 'USD',
       gasPrice: 200
     }
-  }
+  },
 };

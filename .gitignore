@@ -118,3 +118,4 @@ dist
 # Custom
 **/build/
 **/del.me/
+NetworkParams.sol
