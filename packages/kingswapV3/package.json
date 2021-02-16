@@ -1,10 +1,9 @@
 {
-  "name": "KingSwapV3",
+  "name": "kingswap_v3",
   "version": "0.0.1",
   "main": "index.js",
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "@truffle/hdwallet-provider": "^1.2.1"
   }
 }

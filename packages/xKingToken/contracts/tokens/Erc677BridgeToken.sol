@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./Claimable.sol";
 import "./Erc20ExtendedToken.sol";
 import "../interfaces/IClaimable.sol";
 import "../interfaces/IERC677Extension.sol";
 import "../interfaces/IERC677Receiver.sol";
-import "../libraries/AddressUtils.sol";
 import "../interfaces/IMintableBurnable.sol";
+import "../libraries/AddressUtils.sol";
+import "../utils/Claimable.sol";
+import "../utils/NonReentrant.sol";
 
 
 /**
@@ -16,7 +16,7 @@ import "../interfaces/IMintableBurnable.sol";
 * @dev Bridgeable ERC20/ERC677-compatible token
 */
 abstract contract Erc677BridgeToken is
-    ReentrancyGuard,
+    NonReentrant,
     Erc20ExtendedToken,
     Claimable,
     IERC677Extension,
@@ -62,7 +62,7 @@ abstract contract Erc677BridgeToken is
     }
 
     /// @inheritdoc IMintableBurnable
-    function mint(address to, uint256 amount) external override onlyBridge {
+    function mint(address to, uint256 amount) external virtual override onlyBridge {
         require(to != address(0), "BridgeToken:zero address minting");
         _mint(to, amount);
     }

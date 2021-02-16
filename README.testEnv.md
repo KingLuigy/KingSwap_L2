@@ -6,7 +6,9 @@ The _Kovan Testnet_ simulates the _Ethereum mainnet_, while the _POA Sokol Testn
 ### POA Sokol Testnet
 ```
 Network Name: Sokol Testnet
-New RPC URL: https://sokol.poa.network
+RPC URL:
+https://sokol.poa.network
+wss://sokol.poa.network/wss 
 ChainID: 77
 Symbol: SPOA
 Block Explorer URL: https://blockscout.com/poa/sokol
