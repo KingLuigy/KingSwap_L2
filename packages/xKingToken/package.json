@@ -1,0 +1,14 @@
+{
+  "name": "xKingToken",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "compile": "npx truffle compile"
+  }
+}

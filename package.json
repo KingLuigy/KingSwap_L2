@@ -2,6 +2,9 @@
   "name": "root",
   "private": false,
   "devDependencies": {
+    "ganache-cli": "^6.12.2",
+    "lerna": "^3.21.0",
+    "@truffle/hdwallet-provider": "^1.2.2"
   },
   "scripts": {
     "bootstrap": "lerna bootstrap",
