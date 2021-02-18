@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 
-interface IMintableBurnable {
+interface IBurnableMintableErc20Extension {
 
     /// @dev Creates `amount` token to `to` account
     function mint(address to, uint256 amount) external;

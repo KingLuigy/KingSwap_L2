@@ -1,9 +1,9 @@
 pragma solidity >=0.6.0 <0.8.0;
 
-import "./Ownable.sol";
+import "../utils/Ownable.sol";
 import "../interfaces/IAMB.sol";
 import "../libraries/Bytes.sol";
-import "openzeppelin-solidity/contracts/AddressUtils.sol";
+import "../libraries/AddressUtils.sol";
 
 
 /**

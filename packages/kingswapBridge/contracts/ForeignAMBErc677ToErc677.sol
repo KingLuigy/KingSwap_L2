@@ -1,8 +1,9 @@
 pragma solidity >=0.6.0 <0.8.0;
 
-import "./BasicAMBErc677ToErc677.sol";
-import "../../libraries/SafeERC20.sol";
-import "../MediatorBalanceStorage.sol";
+import "./bridges/BasicAMBErc677ToErc677.sol";
+import "../interfaces/IERC677.sol";
+import "./tokens/SafeTransfers.sol";
+import "./upgradeability/MediatorBalanceStorage.sol";
 
 
 /**
@@ -11,7 +12,6 @@ import "../MediatorBalanceStorage.sol";
 * It is designed to be used as an implementation contract of EternalStorageProxy contract.
 */
 contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStorage {
-    using SafeERC20 for ERC677;
 
     /**
      * @dev Executes action on the request to withdraw tokens relayed from the other network
@@ -23,7 +23,7 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
         bytes32 _messageId = messageId();
 
         _setMediatorBalance(mediatorBalance().sub(value));
-        erc677token().safeTransfer(_recipient, value);
+        SafeTransfers.transfer(address(erc677token()), _recipient, value);
 
         emit TokensBridged(_recipient, value, _messageId);
     }
@@ -39,12 +39,12 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
         // When transferFrom is called, after the transfer, the ERC677 token will call onTokenTransfer from this contract
         // which will call passMessage.
         require(!lock());
-        ERC677 token = erc677token();
+        IERC677 token = erc677token();
         require(withinLimit(_value));
         addTotalSpentPerDay(getCurrentDay(), _value);
 
         setLock(true);
-        token.safeTransferFrom(msg.sender, _value);
+        SafeTransfers.transferFrom(address(token), msg.sender, _value);
         setLock(false);
         bridgeSpecificActionsOnTokenTransfer(token, msg.sender, _value, abi.encodePacked(_receiver));
     }
@@ -76,7 +76,7 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
      * @param _data alternative receiver, if specified
      */
     function bridgeSpecificActionsOnTokenTransfer(
-        ERC677, /* _token */
+        IERC677, /* _token */
         address _from,
         uint256 _value,
         bytes _data
@@ -94,7 +94,7 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
     */
     function executeActionOnFixedTokens(address _recipient, uint256 _value) internal {
         _setMediatorBalance(mediatorBalance().sub(_value));
-        erc677token().safeTransfer(_recipient, _value);
+        SafeTransfers.transfer(address(erc677token()), _recipient, _value);
     }
 
     /**

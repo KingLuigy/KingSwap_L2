@@ -1,15 +1,16 @@
 pragma solidity >=0.6.0 <0.8.0;
 
-import "../../interfaces/IAMB.sol";
-import "../Ownable.sol";
-import "../Initializable.sol";
-import "../BaseERC677Bridge.sol";
-import "../BaseOverdrawManagement.sol";
-import "../ReentrancyGuard.sol";
-import "../Upgradeable.sol";
-import "../Claimable.sol";
-import "../VersionableBridge.sol";
-import "../TokenBridgeMediator.sol";
+import "./BaseERC677Bridge.sol";
+import "./BaseOverdrawManagement.sol";
+import "./VersionableBridge.sol";
+import "../interfaces/IAMB.sol";
+import "../interfaces/IERC677.sol";
+import "../mediators/TokenBridgeMediator.sol";
+import "../tokens/Claimable.sol";
+import "../utils/Ownable.sol";
+import "../utils/ReentrancyGuard.sol";
+import "../upgradeability/Initializable.sol";
+import "../upgradeability/Upgradeable.sol";
 
 
 /**
@@ -55,7 +56,7 @@ contract BasicAMBErc677ToErc677 is
     * @dev Public getter for token contract.
     * @return address of the used token contract
     */
-    function erc677token() public view returns (ERC677) {
+    function erc677token() public view returns (IERC677) {
         return _erc677token();
     }
 
@@ -74,7 +75,7 @@ contract BasicAMBErc677ToErc677 is
         // When transferFrom is called, after the transfer, the ERC677 token will call onTokenTransfer from this contract
         // which will call passMessage.
         require(!lock());
-        ERC677 token = erc677token();
+        IERC677 token = erc677token();
         address to = address(this);
         require(withinLimit(_value));
         addTotalSpentPerDay(getCurrentDay(), _value);
@@ -86,7 +87,7 @@ contract BasicAMBErc677ToErc677 is
     }
 
     function onTokenTransfer(address _from, uint256 _value, bytes _data) external returns (bool) {
-        ERC677 token = erc677token();
+        IERC677 token = erc677token();
         require(msg.sender == address(token));
         if (!lock()) {
             require(withinLimit(_value));

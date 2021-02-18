@@ -1,8 +1,8 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "./BasicAMBMediator.sol";
-import "./BasicTokenBridge.sol";
-import "./TransferInfoStorage.sol";
+import "../bridges/BasicTokenBridge.sol";
+import "../upgradeability/TransferInfoStorage.sol";
 
 
 /**

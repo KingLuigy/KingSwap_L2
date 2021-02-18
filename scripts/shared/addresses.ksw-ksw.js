@@ -1,10 +1,21 @@
 module.exports = {
-  // ksw simulates both the "layer1 chain" and the "side-chain"
+  "layer1 chain": "ksw",
+  "side-chain": "ksw",
 
   // AMB contract on the layer1 chain
   ambAddress: '0x3aaB397F7d96Fe4C6d6541B3E59911B8e40281c1', // accounts[8]
   // AMB contract on the side-chain
   xAmbAddress: '0xFd74522B1705579f69670e8Ba201624B2414CA8C', // accounts[9]
+
+  // AMB-mediator (extension) contract for ERC20 on the layer1 chain
+  ambErc20ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
+  // AMB-mediator (extension) contract for ERC20 on the side-chain
+  xAmbErc20ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
+
+  // AMB-mediator (extension) contract for ERC1155 on the layer1 chain
+  ambErc1155ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
+  // AMB-mediator (extension) contract for ERC1155 on the side-chain
+  xAmbErc1155ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
 
   // $KING token on the layer1 chain (original token)
   kingTokenAddress: '0x0000000000000000000000000000000000000000', // ToDo: update

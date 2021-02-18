@@ -7,6 +7,7 @@ module.exports = function (deployer, network, [ owner ]) {
     isDevNet: !!network.match(/^(ksw|local|develop)$/),
     isTestnet: !!network.match(/^(kovan|sokol)$/),
     isMainnet: !!network.match(/^(mainnet|xdai)$/),
+    network,
     owner,
   });
 }

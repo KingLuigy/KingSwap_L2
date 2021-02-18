@@ -127,7 +127,7 @@ contract XKingToken is Erc677BridgeToken, DelegatableCheckpoints, NetworkParams,
 
     function _bridgeContract() internal view override virtual returns (address) {
         this; // silence mutability warning (w/o extra bytecode)
-        return xAmbAddress;
+        return xAmbErc20ExtAddress;
     }
 
     function _checkExpiry(uint256 deadline) private view {

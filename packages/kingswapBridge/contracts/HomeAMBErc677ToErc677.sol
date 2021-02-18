@@ -1,7 +1,8 @@
 pragma solidity >=0.6.0 <0.8.0;
 
-import "./BasicAMBErc677ToErc677.sol";
-import "../../interfaces/IBurnableMintableERC677Token.sol";
+import "./bridges/BasicAMBErc677ToErc677.sol";
+import "./interfaces/IBurnableMintableErc20Extension.sol";
+import "../interfaces/IERC677.sol";
 
 
 /**
@@ -18,7 +19,7 @@ contract HomeAMBErc677ToErc677 is BasicAMBErc677ToErc677 {
     function executeActionOnBridgedTokens(address _recipient, uint256 _value) internal {
         uint256 value = _shiftValue(_value);
         bytes32 _messageId = messageId();
-        IBurnableMintableERC677Token(erc677token()).mint(_recipient, value);
+        IBurnableMintableErc20Extension(erc677token()).mint(_recipient, value);
         emit TokensBridged(_recipient, value, _messageId);
     }
 
@@ -29,9 +30,9 @@ contract HomeAMBErc677ToErc677 is BasicAMBErc677ToErc677 {
      * @param _value requsted amount of bridged tokens
      * @param _data alternative receiver, if specified
      */
-    function bridgeSpecificActionsOnTokenTransfer(ERC677 _token, address _from, uint256 _value, bytes _data) internal {
+    function bridgeSpecificActionsOnTokenTransfer(IERC677 _token, address _from, uint256 _value, bytes _data) internal {
         if (!lock()) {
-            IBurnableMintableERC677Token(_token).burn(_value);
+            IBurnableMintableErc20Extension(_token).burn(_value);
             passMessage(_from, chooseReceiver(_from, _data), _value);
         }
     }
@@ -48,6 +49,6 @@ contract HomeAMBErc677ToErc677 is BasicAMBErc677ToErc677 {
     }
 
     function executeActionOnFixedTokens(address _recipient, uint256 _value) internal {
-        IBurnableMintableERC677Token(erc677token()).mint(_recipient, _value);
+        IBurnableMintableErc20Extension(erc677token()).mint(_recipient, _value);
     }
 }

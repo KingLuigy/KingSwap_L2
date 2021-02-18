@@ -4,6 +4,8 @@ const {
   bytecode: proxyBytecode
 } = require('@openzeppelin/upgrades-core/artifacts/AdminUpgradeabilityProxy');
 
+const uns = process.__userNamespace__;
+
 module.exports = async function(deployer, network, [ owner ]) {
 
   const AdminUpgradeabilityProxy = new web3.eth.Contract(proxyAbi, { data: proxyBytecode });
@@ -13,7 +15,7 @@ module.exports = async function(deployer, network, [ owner ]) {
       []
   );
 
-  process.__userNamespace__.instances.xKingToken = await AdminUpgradeabilityProxy
+  uns.instances.xKingToken = await AdminUpgradeabilityProxy
       .deploy({ arguments: [ tokenImpl.address, owner, initializeCallBytes ] })
       .send({ from: owner, gas: 1000000 });
 };

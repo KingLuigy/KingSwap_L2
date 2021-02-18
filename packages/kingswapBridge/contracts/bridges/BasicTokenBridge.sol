@@ -1,9 +1,9 @@
 pragma solidity >=0.6.0 <0.8.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../upgradeability/EternalStorage.sol";
 import "./DecimalShiftBridge.sol";
-import "./Ownable.sol";
+import "../utils/Ownable.sol";
 
 
 contract BasicTokenBridge is EternalStorage, Ownable, DecimalShiftBridge {

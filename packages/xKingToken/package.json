@@ -1,14 +1,18 @@
 {
   "name": "xKingToken",
   "version": "0.0.1",
-  "main": "index.js",
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "@openzeppelin/contracts": "^3.4.0"
+    "@openzeppelin/contracts": "^3.4.0",
+    "@openzeppelin/upgrades-core": "^1.5.0"
   },
   "devDependencies": {},
   "scripts": {
+    "clean": "rm -fr build/contracts && rm -fr contracts/NetworkParams.sol",
+    "build:ksw": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network ksw-ksw && npx truffle compile",
+    "build:testnet": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network kovan-sokol && npx truffle compile",
+    "build:mainnet": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network mainnet-dai && npx truffle compile",
     "compile": "npx truffle compile"
   }
 }
