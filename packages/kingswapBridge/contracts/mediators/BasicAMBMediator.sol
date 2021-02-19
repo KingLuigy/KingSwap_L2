@@ -5,7 +5,6 @@ import "../interfaces/IAMB.sol";
 import "../libraries/Bytes.sol";
 import "../libraries/AddressUtils.sol";
 
-
 /**
 * @title BasicAMBMediator
 * @dev Basic storage and methods needed by mediators to interact with AMB bridge.
@@ -20,7 +19,7 @@ contract BasicAMBMediator is Ownable {
     */
     modifier onlyMediator {
         require(msg.sender == address(bridgeContract()));
-        require(messageSender() == mediatorContractOnOtherSide());
+        require(messageSender() == mediatorContractOnOtherSide(), "onlyMediator: unauthorized");
         _;
     }
 
@@ -79,7 +78,7 @@ contract BasicAMBMediator is Ownable {
     * @param _bridgeContract the address of the bridge contract.
     */
     function _setBridgeContract(address _bridgeContract) internal {
-        require(AddressUtils.isContract(_bridgeContract));
+        require(AddressUtils.isContract(_bridgeContract), "invalid _bridgeContract");
         addressStorage[BRIDGE_CONTRACT] = _bridgeContract;
     }
 
@@ -96,7 +95,7 @@ contract BasicAMBMediator is Ownable {
     * @param _requestGasLimit the gas limit for the message execution.
     */
     function _setRequestGasLimit(uint256 _requestGasLimit) internal {
-        require(_requestGasLimit <= maxGasPerTx());
+        require(_requestGasLimit <= maxGasPerTx(), "_setRequestGasLimit: overlimit");
         uintStorage[REQUEST_GAS_LIMIT] = _requestGasLimit;
     }
 

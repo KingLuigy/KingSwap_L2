@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
-
 /**
  * @title SafeTransfers
  * @dev Helper methods to transfer/send safely ERC-20 and native token.

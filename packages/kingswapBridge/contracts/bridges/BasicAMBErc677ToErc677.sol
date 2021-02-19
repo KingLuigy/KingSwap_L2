@@ -12,12 +12,11 @@ import "../utils/ReentrancyGuard.sol";
 import "../upgradeability/Initializable.sol";
 import "../upgradeability/Upgradeable.sol";
 
-
 /**
 * @title BasicAMBErc677ToErc677
 * @dev Common functionality for erc677-to-erc677 mediator intended to work on top of AMB bridge.
 */
-contract BasicAMBErc677ToErc677 is
+abstract contract BasicAMBErc677ToErc677 is
     Initializable,
     ReentrancyGuard,
     Upgradeable,
@@ -31,13 +30,13 @@ contract BasicAMBErc677ToErc677 is
         address _bridgeContract,
         address _mediatorContract,
         address _erc677token,
-        uint256[3] _dailyLimitMaxPerTxMinPerTxArray, // [ 0 = _dailyLimit, 1 = _maxPerTx, 2 = _minPerTx ]
-        uint256[2] _executionDailyLimitExecutionMaxPerTxArray, // [ 0 = _executionDailyLimit, 1 = _executionMaxPerTx ]
+        uint256[3] memory _dailyLimitMaxPerTxMinPerTxArray, // [ 0 = _dailyLimit, 1 = _maxPerTx, 2 = _minPerTx ]
+        uint256[2] memory _executionDailyLimitExecutionMaxPerTxArray, // [ 0 = _executionDailyLimit, 1 = _executionMaxPerTx ]
         uint256 _requestGasLimit,
         int256 _decimalShift,
         address _owner
     ) public onlyRelevantSender returns (bool) {
-        require(!isInitialized());
+        require(!isInitialized(), "already initialized");
 
         _setBridgeContract(_bridgeContract);
         _setMediatorContractOnOtherSide(_mediatorContract);
@@ -60,7 +59,7 @@ contract BasicAMBErc677ToErc677 is
         return _erc677token();
     }
 
-    function bridgeContractOnOtherSide() internal view returns (address) {
+    function bridgeContractOnOtherSide() internal view override returns (address) {
         return mediatorContractOnOtherSide();
     }
 
@@ -70,14 +69,14 @@ contract BasicAMBErc677ToErc677 is
     * @param _receiver address that will receive the minted tokens on the other network.
     * @param _value amount of tokens to be transferred to the other network.
     */
-    function relayTokens(address _receiver, uint256 _value) external {
+    function relayTokens(address _receiver, uint256 _value) external virtual {
         // This lock is to prevent calling passMessage twice if a ERC677 token is used.
         // When transferFrom is called, after the transfer, the ERC677 token will call onTokenTransfer from this contract
         // which will call passMessage.
-        require(!lock());
+        require(!lock(), "relayTokens: non-reentrant");
         IERC677 token = erc677token();
         address to = address(this);
-        require(withinLimit(_value));
+        require(withinLimit(_value), "relayTokens: over limit");
         addTotalSpentPerDay(getCurrentDay(), _value);
 
         setLock(true);
@@ -86,22 +85,22 @@ contract BasicAMBErc677ToErc677 is
         bridgeSpecificActionsOnTokenTransfer(token, msg.sender, _value, abi.encodePacked(_receiver));
     }
 
-    function onTokenTransfer(address _from, uint256 _value, bytes _data) external returns (bool) {
+    function onTokenTransfer(address _from, uint256 _value, bytes memory _data) external override returns (bool) {
         IERC677 token = erc677token();
-        require(msg.sender == address(token));
+        require(msg.sender == address(token), "onTokenTransfer: unauthorized");
         if (!lock()) {
-            require(withinLimit(_value));
+            require(withinLimit(_value), "onTokenTransfer: over limit");
             addTotalSpentPerDay(getCurrentDay(), _value);
         }
         bridgeSpecificActionsOnTokenTransfer(token, _from, _value, _data);
         return true;
     }
 
-    function getBridgeInterfacesVersion() external pure returns (uint64 major, uint64 minor, uint64 patch) {
+    function getBridgeInterfacesVersion() external pure override returns (uint64 major, uint64 minor, uint64 patch) {
         return (1, 4, 0);
     }
 
-    function getBridgeMode() external pure returns (bytes4 _data) {
+    function getBridgeMode() external pure override returns (bytes4 _data) {
         return 0x76595b56; // bytes4(keccak256(abi.encodePacked("erc-to-erc-amb")))
     }
 
@@ -110,12 +109,12 @@ contract BasicAMBErc677ToErc677 is
     * @param _recipient address intended to receive the tokens
     * @param _value amount of tokens to be received
     */
-    function executeActionOnBridgedTokensOutOfLimit(address _recipient, uint256 _value) internal {
+    function executeActionOnBridgedTokensOutOfLimit(address _recipient, uint256 _value) internal override {
         bytes32 _messageId = messageId();
         address recipient;
         uint256 value;
         (recipient, value) = txAboveLimits(_messageId);
-        require(recipient == address(0) && value == 0);
+        require(recipient == address(0) && value == 0, "execActOnBrTokensOutOfLimit:E1");
         setOutOfLimitAmount(outOfLimitAmount().add(_value));
         setTxAboveLimits(_recipient, _value, _messageId);
         emit MediatorAmountLimitExceeded(_recipient, _value, _messageId);
@@ -130,16 +129,17 @@ contract BasicAMBErc677ToErc677 is
     */
     function fixAssetsAboveLimits(bytes32 messageId, bool unlockOnOtherSide, uint256 valueToUnlock)
         external
+        override
         onlyIfUpgradeabilityOwner
     {
         (address recipient, uint256 value) = txAboveLimits(messageId);
-        require(recipient != address(0) && value > 0 && value >= valueToUnlock);
+        require(recipient != address(0) && value > 0 && value >= valueToUnlock, "fixAssetsAboveLimits: bad input");
         setOutOfLimitAmount(outOfLimitAmount().sub(valueToUnlock));
         uint256 pendingValue = value.sub(valueToUnlock);
         setTxAboveLimitsValue(pendingValue, messageId);
         emit AssetAboveLimitsFixed(messageId, valueToUnlock, pendingValue);
         if (unlockOnOtherSide) {
-            require(valueToUnlock <= maxPerTx());
+            require(valueToUnlock <= maxPerTx(), "fixAssetsAboveLimits: over limit");
             passMessage(recipient, recipient, valueToUnlock);
         }
     }

@@ -1,10 +1,9 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "./bridges/BasicAMBErc677ToErc677.sol";
-import "../interfaces/IERC677.sol";
+import "./interfaces/IERC677.sol";
 import "./tokens/SafeTransfers.sol";
 import "./upgradeability/MediatorBalanceStorage.sol";
-
 
 /**
 * @title ForeignAMBErc677ToErc677
@@ -18,7 +17,7 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
      * @param _recipient address of tokens receiver
      * @param _value amount of bridged tokens
      */
-    function executeActionOnBridgedTokens(address _recipient, uint256 _value) internal {
+    function executeActionOnBridgedTokens(address _recipient, uint256 _value) internal override {
         uint256 value = _unshiftValue(_value);
         bytes32 _messageId = messageId();
 
@@ -34,17 +33,17 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
     * @param _receiver address that will receive the minted tokens on the other network.
     * @param _value amount of tokens to be transferred to the other network.
     */
-    function relayTokens(address _receiver, uint256 _value) external {
+    function relayTokens(address _receiver, uint256 _value) external override {
         // This lock is to prevent calling passMessage twice if a ERC677 token is used.
         // When transferFrom is called, after the transfer, the ERC677 token will call onTokenTransfer from this contract
         // which will call passMessage.
-        require(!lock());
+        require(!lock(), "relayTokens: non-reentrant");
         IERC677 token = erc677token();
-        require(withinLimit(_value));
+        require(withinLimit(_value), "relayTokens: limits exceeded");
         addTotalSpentPerDay(getCurrentDay(), _value);
 
         setLock(true);
-        SafeTransfers.transferFrom(address(token), msg.sender, _value);
+        SafeTransfers.transferFrom(address(token), msg.sender, address(this), _value);
         setLock(false);
         bridgeSpecificActionsOnTokenTransfer(token, msg.sender, _value, abi.encodePacked(_receiver));
     }
@@ -57,10 +56,10 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
     function fixMediatorBalance(address _receiver) external onlyIfUpgradeabilityOwner validAddress(_receiver) {
         uint256 balance = _erc677token().balanceOf(address(this));
         uint256 expectedBalance = mediatorBalance();
-        require(balance > expectedBalance);
+        require(balance > expectedBalance, "fixMedBal: not enough balance");
         uint256 diff = balance - expectedBalance;
         uint256 available = maxAvailablePerTx();
-        require(available > 0);
+        require(available > 0, "fixMedBal: not available");
         if (diff > available) {
             diff = available;
         }
@@ -79,8 +78,8 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
         IERC677, /* _token */
         address _from,
         uint256 _value,
-        bytes _data
-    ) internal {
+        bytes memory _data
+    ) internal override {
         if (!lock()) {
             _setMediatorBalance(mediatorBalance().add(_value));
             passMessage(_from, chooseReceiver(_from, _data), _value);
@@ -92,7 +91,7 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
     * @param _recipient address that will receive the tokens
     * @param _value amount of tokens to be received
     */
-    function executeActionOnFixedTokens(address _recipient, uint256 _value) internal {
+    function executeActionOnFixedTokens(address _recipient, uint256 _value) internal override {
         _setMediatorBalance(mediatorBalance().sub(_value));
         SafeTransfers.transfer(address(erc677token()), _recipient, _value);
     }
@@ -103,7 +102,7 @@ contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStor
     * @param _to address that will receive the locked tokens on this contract.
     */
     function claimTokens(address _token, address _to) external onlyIfUpgradeabilityOwner {
-        require(_token != address(_erc677token()));
+        require(_token != address(_erc677token()), "claimTokens: bridged token claim");
         claimValues(_token, _to);
     }
 }

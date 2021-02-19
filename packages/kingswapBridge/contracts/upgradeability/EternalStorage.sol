@@ -1,6 +1,5 @@
 pragma solidity >=0.6.0 <0.8.0;
 
-
 /**
  * @title EternalStorage
  * @dev This contract holds all the necessary state variables to carry out the storage of any contract.

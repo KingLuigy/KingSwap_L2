@@ -1,7 +1,7 @@
-pragma solidity 0.4.24;
+pragma solidity >=0.6.0 <0.8.0;
 
+import "../libraries/SafeMath.sol";
 import "../upgradeability/EternalStorage.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract DecimalShiftBridge is EternalStorage {
     using SafeMath for uint256;
@@ -16,7 +16,7 @@ contract DecimalShiftBridge is EternalStorage {
     */
     function _setDecimalShift(int256 _shift) internal {
         // since 1 wei * 10**77 > 2**255, it does not make any sense to use higher values
-        require(_shift > -77 && _shift < 77);
+        require(_shift > -77 && _shift < 77, "_setDecimalShift:E1");
         uintStorage[DECIMAL_SHIFT] = uint256(_shift);
     }
 

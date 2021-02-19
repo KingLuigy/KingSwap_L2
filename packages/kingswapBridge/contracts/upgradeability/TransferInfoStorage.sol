@@ -2,7 +2,6 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "../upgradeability/EternalStorage.sol";
 
-
 contract TransferInfoStorage is EternalStorage {
     /**
     * @dev Stores the value of a message sent to the AMB bridge.

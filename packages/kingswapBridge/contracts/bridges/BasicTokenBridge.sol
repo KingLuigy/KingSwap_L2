@@ -1,10 +1,9 @@
 pragma solidity >=0.6.0 <0.8.0;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../upgradeability/EternalStorage.sol";
 import "./DecimalShiftBridge.sol";
+import "../libraries/SafeMath.sol";
+import "../upgradeability/EternalStorage.sol";
 import "../utils/Ownable.sol";
-
 
 contract BasicTokenBridge is EternalStorage, Ownable, DecimalShiftBridge {
     using SafeMath for uint256;
@@ -70,29 +69,29 @@ contract BasicTokenBridge is EternalStorage, Ownable, DecimalShiftBridge {
     }
 
     function setDailyLimit(uint256 _dailyLimit) external onlyOwner {
-        require(_dailyLimit > maxPerTx() || _dailyLimit == 0);
+        require(_dailyLimit > maxPerTx() || _dailyLimit == 0, "setDailyLimit: invalid limit");
         uintStorage[DAILY_LIMIT] = _dailyLimit;
         emit DailyLimitChanged(_dailyLimit);
     }
 
     function setExecutionDailyLimit(uint256 _dailyLimit) external onlyOwner {
-        require(_dailyLimit > executionMaxPerTx() || _dailyLimit == 0);
+        require(_dailyLimit > executionMaxPerTx() || _dailyLimit == 0, "setExecDailyLimit: invalid limit");
         uintStorage[EXECUTION_DAILY_LIMIT] = _dailyLimit;
         emit ExecutionDailyLimitChanged(_dailyLimit);
     }
 
     function setExecutionMaxPerTx(uint256 _maxPerTx) external onlyOwner {
-        require(_maxPerTx < executionDailyLimit());
+        require(_maxPerTx < executionDailyLimit(), "setExecMaxPerTx: invalid limit");
         uintStorage[EXECUTION_MAX_PER_TX] = _maxPerTx;
     }
 
     function setMaxPerTx(uint256 _maxPerTx) external onlyOwner {
-        require(_maxPerTx == 0 || (_maxPerTx > minPerTx() && _maxPerTx < dailyLimit()));
+        require(_maxPerTx == 0 || (_maxPerTx > minPerTx() && _maxPerTx < dailyLimit()), "setMaxPerTx: invalid limit");
         uintStorage[MAX_PER_TX] = _maxPerTx;
     }
 
     function setMinPerTx(uint256 _minPerTx) external onlyOwner {
-        require(_minPerTx > 0 && _minPerTx < dailyLimit() && _minPerTx < maxPerTx());
+        require(_minPerTx > 0 && _minPerTx < dailyLimit() && _minPerTx < maxPerTx(), "setMinPerTx: invalid limit");
         uintStorage[MIN_PER_TX] = _minPerTx;
     }
 
@@ -108,11 +107,12 @@ contract BasicTokenBridge is EternalStorage, Ownable, DecimalShiftBridge {
         return _maxPerTx < _remainingOutOfDaily ? _maxPerTx : _remainingOutOfDaily;
     }
 
-    function _setLimits(uint256[3] _limits) internal {
+    function _setLimits(uint256[3] memory _limits) internal {
         require(
             _limits[2] > 0 && // minPerTx > 0
                 _limits[1] > _limits[2] && // maxPerTx > minPerTx
-                _limits[0] > _limits[1] // dailyLimit > maxPerTx
+                _limits[0] > _limits[1], // dailyLimit > maxPerTx
+            "_setLimits: invalid limits"
         );
 
         uintStorage[DAILY_LIMIT] = _limits[0];
@@ -122,8 +122,8 @@ contract BasicTokenBridge is EternalStorage, Ownable, DecimalShiftBridge {
         emit DailyLimitChanged(_limits[0]);
     }
 
-    function _setExecutionLimits(uint256[2] _limits) internal {
-        require(_limits[1] < _limits[0]); // foreignMaxPerTx < foreignDailyLimit
+    function _setExecutionLimits(uint256[2] memory _limits) internal {
+        require(_limits[1] < _limits[0], "_setExecLimits: invalid limits"); // foreignMaxPerTx < foreignDailyLimit
 
         uintStorage[EXECUTION_DAILY_LIMIT] = _limits[0];
         uintStorage[EXECUTION_MAX_PER_TX] = _limits[1];

@@ -4,12 +4,11 @@ import "./BasicAMBMediator.sol";
 import "../bridges/BasicTokenBridge.sol";
 import "../upgradeability/TransferInfoStorage.sol";
 
-
 /**
 * @title TokenBridgeMediator
 * @dev Common mediator functionality to handle operations related to token bridge messages sent to AMB bridge.
 */
-contract TokenBridgeMediator is BasicAMBMediator, BasicTokenBridge, TransferInfoStorage {
+abstract contract TokenBridgeMediator is BasicAMBMediator, BasicTokenBridge, TransferInfoStorage {
     event FailedMessageFixed(bytes32 indexed messageId, address recipient, uint256 value);
     event TokensBridgingInitiated(address indexed sender, uint256 value, bytes32 indexed messageId);
     event TokensBridged(address indexed recipient, uint256 value, bytes32 indexed messageId);
@@ -59,9 +58,9 @@ contract TokenBridgeMediator is BasicAMBMediator, BasicTokenBridge, TransferInfo
     * @param _messageId id of the message which execution failed.
     */
     function requestFailedMessageFix(bytes32 _messageId) external {
-        require(!bridgeContract().messageCallStatus(_messageId));
-        require(bridgeContract().failedMessageReceiver(_messageId) == address(this));
-        require(bridgeContract().failedMessageSender(_messageId) == mediatorContractOnOtherSide());
+        require(!bridgeContract().messageCallStatus(_messageId), "requestFailedMessageFix:E1");
+        require(bridgeContract().failedMessageReceiver(_messageId) == address(this), "requestFailedMessageFix:E2");
+        require(bridgeContract().failedMessageSender(_messageId) == mediatorContractOnOtherSide(), "requestFailedMessageFix:E3");
 
         bytes4 methodSelector = this.fixFailedMessage.selector;
         bytes memory data = abi.encodeWithSelector(methodSelector, _messageId);
@@ -74,7 +73,7 @@ contract TokenBridgeMediator is BasicAMBMediator, BasicTokenBridge, TransferInfo
     * @param _messageId id of the message which execution failed on the other network.
     */
     function fixFailedMessage(bytes32 _messageId) external onlyMediator {
-        require(!messageFixed(_messageId));
+        require(!messageFixed(_messageId), "msg already fixed");
 
         address recipient = messageRecipient(_messageId);
         uint256 value = messageValue(_messageId);
@@ -84,11 +83,11 @@ contract TokenBridgeMediator is BasicAMBMediator, BasicTokenBridge, TransferInfo
     }
 
     /* solcov ignore next */
-    function executeActionOnBridgedTokensOutOfLimit(address _recipient, uint256 _value) internal;
+    function executeActionOnBridgedTokensOutOfLimit(address _recipient, uint256 _value) virtual internal;
 
     /* solcov ignore next */
-    function executeActionOnBridgedTokens(address _recipient, uint256 _value) internal;
+    function executeActionOnBridgedTokens(address _recipient, uint256 _value) virtual internal;
 
     /* solcov ignore next */
-    function executeActionOnFixedTokens(address _recipient, uint256 _value) internal;
+    function executeActionOnFixedTokens(address _recipient, uint256 _value) virtual internal;
 }

@@ -11,7 +11,7 @@ module.exports = {
   // AMB-mediator (extension) contract for ERC20 on the layer1 chain
   ambErc20ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
   // AMB-mediator (extension) contract for ERC20 on the side-chain
-  xAmbErc20ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
+  xAmbErc20ExtAddress: '0x15390f348e49135D06Ed6B9c968223aeD108E105',
 
   // AMB-mediator (extension) contract for ERC1155 on the layer1 chain
   ambErc1155ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update

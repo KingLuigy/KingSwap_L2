@@ -2,7 +2,6 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "../upgradeability/EternalStorage.sol";
 
-
 /**
  * @title MediatorBalanceStorage
  * @dev Storage helpers for the mediator balance tracking.

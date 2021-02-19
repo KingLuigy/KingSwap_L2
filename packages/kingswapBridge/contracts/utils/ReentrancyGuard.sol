@@ -1,8 +1,7 @@
 pragma solidity >=0.6.0 <0.8.0;
 
-
 contract ReentrancyGuard {
-    function lock() internal returns (bool res) {
+    function lock() internal view returns (bool res) {
         assembly {
             // Even though this is not the same as boolStorage[keccak256(abi.encodePacked("lock"))],
             // since solidity mapping introduces another level of addressing, such slot change is safe

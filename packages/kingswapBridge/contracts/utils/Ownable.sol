@@ -3,7 +3,6 @@ pragma solidity >=0.6.0 <0.8.0;
 import "../upgradeability/EternalStorage.sol";
 import "../interfaces/IUpgradeabilityOwnerStorage.sol";
 
-
 /**
  * @title Ownable
  * @dev This contract has an owner address providing basic authorization control
@@ -22,7 +21,7 @@ contract Ownable is EternalStorage {
     * @dev Throws if called by any account other than the owner.
     */
     modifier onlyOwner() {
-        require(msg.sender == owner());
+        require(msg.sender == owner(), "OnlyOwner: Unauthorized");
         /* solcov ignore next */
         _;
     }
@@ -31,11 +30,10 @@ contract Ownable is EternalStorage {
     * @dev Throws if called by any account other than contract itself or owner.
     */
     modifier onlyRelevantSender() {
-        // proxy owner if used through proxy, address(0) otherwise
         require(
-            !address(this).call(abi.encodeWithSelector(UPGRADEABILITY_OWNER)) || // covers usage without calling through storage proxy
-                msg.sender == IUpgradeabilityOwnerStorage(this).upgradeabilityOwner() || // covers usage through regular proxy calls
-                msg.sender == address(this) // covers calls through upgradeAndCall proxy method
+            msg.sender == IUpgradeabilityOwnerStorage(address(this)).upgradeabilityOwner() || // through proxy calls
+            msg.sender == address(this), // through upgradeAndCall proxy method calls
+            "onlyRelevantSender: Unauthorized"
         );
         /* solcov ignore next */
         _;
@@ -63,7 +61,7 @@ contract Ownable is EternalStorage {
     * @dev Sets a new owner address
     */
     function _setOwner(address newOwner) internal {
-        require(newOwner != address(0));
+        require(newOwner != address(0), "Invalid newOwner");
         emit OwnershipTransferred(owner(), newOwner);
         addressStorage[OWNER] = newOwner;
     }

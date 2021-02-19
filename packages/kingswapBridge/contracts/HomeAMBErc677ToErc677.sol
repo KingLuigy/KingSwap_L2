@@ -2,8 +2,7 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "./bridges/BasicAMBErc677ToErc677.sol";
 import "./interfaces/IBurnableMintableErc20Extension.sol";
-import "../interfaces/IERC677.sol";
-
+import "./interfaces/IERC677.sol";
 
 /**
 * @title HomeAMBErc677ToErc677
@@ -16,10 +15,10 @@ contract HomeAMBErc677ToErc677 is BasicAMBErc677ToErc677 {
      * @param _recipient address of tokens receiver
      * @param _value amount of bridged tokens
      */
-    function executeActionOnBridgedTokens(address _recipient, uint256 _value) internal {
+    function executeActionOnBridgedTokens(address _recipient, uint256 _value) internal override {
         uint256 value = _shiftValue(_value);
         bytes32 _messageId = messageId();
-        IBurnableMintableErc20Extension(erc677token()).mint(_recipient, value);
+        IBurnableMintableErc20Extension(address(erc677token())).mint(_recipient, value);
         emit TokensBridged(_recipient, value, _messageId);
     }
 
@@ -30,9 +29,12 @@ contract HomeAMBErc677ToErc677 is BasicAMBErc677ToErc677 {
      * @param _value requsted amount of bridged tokens
      * @param _data alternative receiver, if specified
      */
-    function bridgeSpecificActionsOnTokenTransfer(IERC677 _token, address _from, uint256 _value, bytes _data) internal {
+    function bridgeSpecificActionsOnTokenTransfer(IERC677 _token, address _from, uint256 _value, bytes memory _data)
+        internal
+        override
+    {
         if (!lock()) {
-            IBurnableMintableErc20Extension(_token).burn(_value);
+            IBurnableMintableErc20Extension(address(_token)).burn(_value);
             passMessage(_from, chooseReceiver(_from, _data), _value);
         }
     }
@@ -48,7 +50,7 @@ contract HomeAMBErc677ToErc677 is BasicAMBErc677ToErc677 {
         claimValues(_token, _to);
     }
 
-    function executeActionOnFixedTokens(address _recipient, uint256 _value) internal {
-        IBurnableMintableErc20Extension(erc677token()).mint(_recipient, _value);
+    function executeActionOnFixedTokens(address _recipient, uint256 _value) internal override {
+        IBurnableMintableErc20Extension(address(erc677token())).mint(_recipient, _value);
     }
 }

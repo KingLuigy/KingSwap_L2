@@ -2,12 +2,11 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "../upgradeability/EternalStorage.sol";
 
-
 /**
  * @title BaseOverdrawManagement
  * @dev This contract implements basic functionality for tracking execution bridge operations that are out of limits.
  */
-contract BaseOverdrawManagement is EternalStorage {
+abstract contract BaseOverdrawManagement is EternalStorage {
     event MediatorAmountLimitExceeded(address recipient, uint256 value, bytes32 indexed messageId);
     event AmountLimitExceeded(address recipient, uint256 value, bytes32 indexed transactionHash, bytes32 messageId);
     event AssetAboveLimitsFixed(bytes32 indexed messageId, uint256 value, uint256 remaining);
@@ -33,7 +32,8 @@ contract BaseOverdrawManagement is EternalStorage {
     /**
      * @dev Internal function for retrieving information about out-of-limits bridge operation.
      * @param _messageId id of the message that cause above-limits error.
-     * @return (address of the receiver, amount of coins/tokens in the bridge operation)
+     * @return recipient address of the receiver
+     * @return value amount of coins/tokens in the bridge operation
      */
     function txAboveLimits(bytes32 _messageId) internal view returns (address recipient, uint256 value) {
         recipient = addressStorage[keccak256(abi.encodePacked("txOutOfLimitRecipient", _messageId))];
@@ -56,10 +56,10 @@ contract BaseOverdrawManagement is EternalStorage {
      * @param _value amount of coins/tokens inside the bridge operation.
      * @param _messageId id of the message that cause above-limits error.
      */
-    function setTxAboveLimitsValue(uint256 _value, bytes32 _messageId) internal {
+    function setTxAboveLimitsValue(uint256 _value, bytes32 _messageId) internal virtual {
         uintStorage[keccak256(abi.encodePacked("txOutOfLimitValue", _messageId))] = _value;
     }
 
     /* solcov ignore next */
-    function fixAssetsAboveLimits(bytes32 messageId, bool unlockOnForeign, uint256 valueToUnlock) external;
+    function fixAssetsAboveLimits(bytes32 messageId, bool unlockOnForeign, uint256 valueToUnlock) virtual external;
 }
