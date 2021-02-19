@@ -1,15 +1,12 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "../upgradeability/EternalStorage.sol";
-import "../interfaces/IUpgradeabilityOwnerStorage.sol";
 
 /**
  * @title Ownable
  * @dev This contract has an owner address providing basic authorization control
  */
 contract Ownable is EternalStorage {
-    bytes4 internal constant UPGRADEABILITY_OWNER = 0x6fde8202; // upgradeabilityOwner()
-
     /**
     * @dev Event to show ownership has been transferred
     * @param previousOwner representing the address of the previous owner
@@ -22,19 +19,6 @@ contract Ownable is EternalStorage {
     */
     modifier onlyOwner() {
         require(msg.sender == owner(), "OnlyOwner: Unauthorized");
-        /* solcov ignore next */
-        _;
-    }
-
-    /**
-    * @dev Throws if called by any account other than contract itself or owner.
-    */
-    modifier onlyRelevantSender() {
-        require(
-            msg.sender == IUpgradeabilityOwnerStorage(address(this)).upgradeabilityOwner() || // through proxy calls
-            msg.sender == address(this), // through upgradeAndCall proxy method calls
-            "onlyRelevantSender: Unauthorized"
-        );
         /* solcov ignore next */
         _;
     }
