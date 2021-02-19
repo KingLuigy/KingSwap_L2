@@ -18,7 +18,9 @@ SPOA Faucet: https://faucet.poa.network/
 ## Bridge
 __Arbitrary Message Bridge (AMB)__ between the _Kovan Testnet_ and the _POA Sokol Testnet_ is used.   
 The bridge allows testing cross-chain functionality.  
-A detailed description of the AMB is available here: [Arbitrary Message Bridge (AMB)](https://docs.tokenbridge.net/amb-bridge/about-amb-bridge).
+Further explanations:  
+[About the kovan-sokol AMB](https://github.com/tokenbridge/docs/blob/master/kovan-sokol-amb-bridge/about-the-kovan-sokol-amb.md)  
+[Arbitrary Message Bridge (AMB)](https://docs.tokenbridge.net/amb-bridge/about-amb-bridge).
 ```
 Kovan Testnet:
 AMB contract: 0xFe446bEF1DbF7AFE24E81e05BC8B271C1BA9a560

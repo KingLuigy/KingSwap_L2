@@ -30,7 +30,7 @@ library SafeTransfers {
 }
 
 contract Sacrifice {
-    constructor(address recipient) public payable {
+    constructor(address recipient) payable {
         selfdestruct(payable(recipient));
     }
 }

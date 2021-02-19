@@ -6,12 +6,11 @@ contract ERC677BridgeTokenMock is ERC20Mock {
     address public bridgeContract;
 
     modifier onlyBridge() {
-        require(bridgeContract == msg.sender, "unauthorized");
+        require(bridgeContract == msg.sender, "ERC677BridgeTokenMock: unauthorized");
         _;
     }
 
-    constructor(string memory _name, string memory _symbol, uint8 _decimals)
-        public ERC20Mock(_name, _symbol, _decimals)
+    constructor(string memory _name, string memory _symbol, uint8 _decimals) ERC20Mock(_name, _symbol, _decimals)
     { }
 
     function transferOwnership(address newOwner) external onlyOwner {
@@ -42,7 +41,7 @@ contract ERC677BridgeTokenMock is ERC20Mock {
     }
 
     function mint(address to, uint256 amount) external virtual override onlyBridge {
-        require(to != address(0), "zero address minting");
+        require(to != address(0), "mint: zero address minting");
         _mint(to, amount);
     }
 

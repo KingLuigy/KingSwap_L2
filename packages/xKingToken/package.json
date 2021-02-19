@@ -12,7 +12,7 @@
     "clean": "rm -fr build/contracts && rm -fr contracts/NetworkParams.sol",
     "build:ksw": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network ksw-ksw && npx truffle compile",
     "build:testnet": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network kovan-sokol && npx truffle compile",
-    "build:mainnet": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network mainnet-dai && npx truffle compile",
+    "build:mainnet": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network mainnet-xdai && npx truffle compile",
     "compile": "npx truffle compile"
   }
 }

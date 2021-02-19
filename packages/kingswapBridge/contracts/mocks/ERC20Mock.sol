@@ -17,11 +17,11 @@ contract ERC20Mock {
     event Transfer(address indexed from, address indexed to, uint value);
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "unauthorized");
+        require(msg.sender == owner, "ERC20Mock: unauthorized");
         _;
     }
 
-    constructor(string memory _name, string memory _symbol, uint8 _decimals) public {
+    constructor(string memory _name, string memory _symbol, uint8 _decimals) {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;

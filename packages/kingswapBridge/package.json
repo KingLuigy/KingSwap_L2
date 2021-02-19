@@ -7,7 +7,12 @@
   "dependencies": {
     "@openzeppelin/upgrades-core": "^1.5.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "chai": "^4.3.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-bn": "^0.2.1",
+    "eth-gas-reporter": "^0.2.21"
+  },
   "scripts": {
     "clean": "rm -fr build/contracts && rm -fr contracts/NetworkParams.sol",
     "build:ksw": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network ksw-ksw && npx truffle compile",

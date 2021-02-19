@@ -5,6 +5,7 @@ import "./BaseOverdrawManagement.sol";
 import "./VersionableBridge.sol";
 import "../interfaces/IAMB.sol";
 import "../interfaces/IERC677.sol";
+import "../libraries/SafeMath.sol";
 import "../mediators/TokenBridgeMediator.sol";
 import "../tokens/Claimable.sol";
 import "../utils/Ownable.sol";
@@ -26,14 +27,16 @@ abstract contract BasicAMBErc677ToErc677 is
     BaseERC677Bridge,
     TokenBridgeMediator
 {
+    using SafeMath for uint256;
+
     function initialize(
-        address _bridgeContract, // AMB bridge contract address on "this" network
-        address _mediatorContract, // the mediator contract address from the "other" network
-        address _erc677token, // ERC20/ERC677 contract on "this" network
+        address _bridgeContract, // the AMB bridge contract on "this" network
+        address _mediatorContract, // the mediator contract on the "other" network
+        address _erc677token, // the ERC20/ERC677 contract on "this" network
         uint256[3] memory _dailyLimitMaxPerTxMinPerTxArray, // [ 0 = _dailyLimit, 1 = _maxPerTx, 2 = _minPerTx ]
         uint256[2] memory _executionDailyLimitExecutionMaxPerTxArray, // [ 0 = _executionDailyLimit, 1 = _executionMaxPerTx ]
-        uint256 _requestGasLimit,
-        int256 _decimalShift,
+        uint256 _requestGasLimit, // the gas limit for the message execution on the "other" network
+        int256 _decimalShift, // the value of foreign-to-home decimal shift
         address _owner
     ) public onlyIfUpgradeabilityOwner returns (bool) {
         require(!isInitialized(), "already initialized");

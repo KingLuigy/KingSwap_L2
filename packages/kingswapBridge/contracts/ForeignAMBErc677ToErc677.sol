@@ -2,6 +2,7 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "./bridges/BasicAMBErc677ToErc677.sol";
 import "./interfaces/IERC677.sol";
+import "./libraries/SafeMath.sol";
 import "./tokens/SafeTransfers.sol";
 import "./upgradeability/MediatorBalanceStorage.sol";
 
@@ -11,6 +12,7 @@ import "./upgradeability/MediatorBalanceStorage.sol";
 * It is designed to be used as an implementation contract of EternalStorageProxy contract.
 */
 contract ForeignAMBErc677ToErc677 is BasicAMBErc677ToErc677, MediatorBalanceStorage {
+    using SafeMath for uint256;
 
     /**
      * @dev Executes action on the request to withdraw tokens relayed from the other network

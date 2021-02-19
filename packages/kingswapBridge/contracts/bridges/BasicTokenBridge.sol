@@ -57,7 +57,7 @@ contract BasicTokenBridge is EternalStorage, Ownable, DecimalShiftBridge {
 
     function getCurrentDay() public view returns (uint256) {
         // solhint-disable-next-line not-rely-on-time
-        return now / 1 days;
+        return block.timestamp / 1 days;
     }
 
     function addTotalSpentPerDay(uint256 _day, uint256 _value) internal {

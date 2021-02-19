@@ -1,10 +1,10 @@
-const ERC677BridgeToken = artifacts.require('ERC677BridgeToken.sol')
+const ERC677BridgeToken = artifacts.require('ERC677BridgeTokenMock.sol')
 const ERC20Mock = artifacts.require('ERC20Mock.sol')
 const AMBMock = artifacts.require('AMBMock.sol')
 
 const { expect } = require('chai')
-const { ZERO_ADDRESS, toBN, ERROR_MSG } = require('../setup')
-const { getEvents, expectEventInLogs, ether, strip0x } = require('../helpers/helpers')
+const { ZERO_ADDRESS, toBN, ERROR_MSG } = require('./helpers/setup')
+const { getEvents, expectEventInLogs, ether, strip0x } = require('./helpers/helpers')
 
 const ZERO = toBN(0)
 const oneEther = ether('1')
