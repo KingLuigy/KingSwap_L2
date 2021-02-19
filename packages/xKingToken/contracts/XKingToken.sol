@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
-import "./tokens/Erc677BridgeToken.sol";
-import "./tokens/governance/DelegatableCheckpoints.sol";
 import "./interfaces/IMetaTxsSupport.sol";
 import "./libraries/Signing.sol";
 import "./NetworkParams.sol";
+import "./tokens/Erc677BridgeToken.sol";
+import "./tokens/governance/DelegatableCheckpoints.sol";
+import "./utils/Eip1967Proxied.sol";
 
 
 /**
  * @title XKingToken
  * @notice ERC-20 token extended with minting, burning and governance
  */
-contract XKingToken is Erc677BridgeToken, DelegatableCheckpoints, NetworkParams, IMetaTxsSupport {
+contract XKingToken is Eip1967Proxied, Erc677BridgeToken, DelegatableCheckpoints, NetworkParams, IMetaTxsSupport {
 
     string public constant version = "1";
 
@@ -36,8 +37,8 @@ contract XKingToken is Erc677BridgeToken, DelegatableCheckpoints, NetworkParams,
         "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
     );
 
-    // true for the "implementation" (aka "logic"), false for the "proxy" instance
-    bool internal _isLogic;
+    // Slot skipped for prev version' storage compatibility
+    uint256 private  _gap;
 
     /// @notice EIP712 Domain separator
     bytes32 public DOMAIN_SEPARATOR;
@@ -45,16 +46,14 @@ contract XKingToken is Erc677BridgeToken, DelegatableCheckpoints, NetworkParams,
     /// @notice Mapping from a user address to the nonce for signing/validating signatures
     mapping (address => uint) public nonces;
 
-    constructor() public {
-        // Prevent abusing use of the implementation w/o the proxy that delegatecall's it
-        // (this code does NOT change the proxy' storage)
-        _isLogic = true;
-    }
-
-    // @dev Init the contract storage.
+    // @dev Init the proxy contract storage
     function initialize() public {
-        require(_isLogic == false, "xKingToken:MUST_BE_PROXY");
-        require(DOMAIN_SEPARATOR == bytes32(0), "xKingToken: already initialized");
+        require(isEip1967Proxy(), "xKingToken:MUST_BE_PROXY");
+        require(
+            msg.sender == IEip1967Proxied(address(this)).proxyAdmin(),
+            "xKingToken:MUST_BE_ADMIN"
+        );
+        require(DOMAIN_SEPARATOR == bytes32(0), "xKingToken:ALREADY_INITIALIZED");
 
         _initNonReentratnt();
         DOMAIN_SEPARATOR = keccak256(
@@ -71,15 +70,14 @@ contract XKingToken is Erc677BridgeToken, DelegatableCheckpoints, NetworkParams,
     /// @notice Returns the name of the token
     /// @dev Data is relevant for the proxy but not for the implementation
     function name() public view returns (string memory) {
-        this; // silence mutability warning (w/o extra bytecode)
-        return _isLogic ? "" : _name;
+        return isEip1967Proxy() ? _name : "";
     }
 
     /// @notice Returns the symbol of the token
     /// @dev Data is relevant for the proxy but not for the implementation
     function symbol() public view returns (string memory) {
         this; // silence mutability warning (w/o extra bytecode)
-        return _isLogic ? "" : _symbol;
+        return isEip1967Proxy() ? _symbol : "";
     }
 
     function permit(
