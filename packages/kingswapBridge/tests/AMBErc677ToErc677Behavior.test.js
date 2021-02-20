@@ -167,6 +167,8 @@ function shouldBehaveLikeBasicAMBErc677ToErc677(otherSideMediatorContract, accou
         owner
       ).should.be.fulfilled
 
+      console.log('*** DEBUG #1');
+
       // already initialized
       await contract
         .initialize(
@@ -181,6 +183,7 @@ function shouldBehaveLikeBasicAMBErc677ToErc677(otherSideMediatorContract, accou
         )
         .should.be.rejectedWith(ERROR_MSG)
 
+      console.log('*** DEBUG #2');
       expect(await contract.isInitialized()).to.be.equal(true)
       expect(await contract.bridgeContract()).to.be.equal(bridgeContract.address)
       expect(await contract.mediatorContractOnOtherSide()).to.be.equal(mediatorContract.address)

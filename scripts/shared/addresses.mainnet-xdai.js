@@ -28,7 +28,7 @@ module.exports = {
 
   // x$KING token on the side-chain (replica of the $KING)
   xKingTokenAddress: '0xcCd05d20Cc7f1994425Dd21A8939A222D433cD1C', // proxy
-  xKingTokenImplAddress: '0x0000000000000000000000000000000000000000', // implementation // ToDo: update
+  xKingTokenImplAddress: '0xd382dFF7Fc42c7f1CCC4CD4275146d7e5A21811D', // implementation
 
   // ERC1155 on the layer1 chain (replica of the side-chain ERC1155)
   Erc1155Address: '0x0000000000000000000000000000000000000000', // ToDo: update
