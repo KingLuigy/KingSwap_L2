@@ -53,7 +53,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
       ambBridgeContract = await (
           new web3.eth.Contract(HomeAMB.abi, {data: HomeAMB.bytecode})
       ).deploy({arguments: []}).send({from: accounts[0], gas: 5000000})
-      await ambBridgeContract.initialize(
+      await ambBridgeContract.methods.initialize(
         HOME_CHAIN_ID_HEX,
         FOREIGN_CHAIN_ID_HEX,
         validatorContract.options.address,
@@ -178,7 +178,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
       // Given
       const currentDay = await homeBridge.getCurrentDay()
       expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(ZERO)
-      const initialEvents = await getEvents(erc677Token, { event: '_Mint' })
+      const initialEvents = await getEvents(erc677Token, { event: 'Mint' })
       expect(initialEvents.length).to.be.equal(0)
       expect(await erc677Token.totalSupply()).to.be.bignumber.equal(ZERO)
 
@@ -207,7 +207,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
 
       // Then
       expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(oneEther)
-      const events = await getEvents(erc677Token, { event: '_Mint' })
+      const events = await getEvents(erc677Token, { event: 'Mint' })
       expect(events.length).to.be.equal(1)
       expect(events[0].returnValues.to).to.be.equal(user)
       expect(events[0].returnValues.amount).to.be.equal(oneEther.toString())
@@ -244,7 +244,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
 
         const currentDay = await homeBridge.getCurrentDay()
         expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(ZERO)
-        const initialEvents = await getEvents(erc677Token, { event: '_Mint' })
+        const initialEvents = await getEvents(erc677Token, { event: 'Mint' })
         expect(initialEvents.length).to.be.equal(0)
         expect(await erc677Token.totalSupply()).to.be.bignumber.equal(ZERO)
 
@@ -271,7 +271,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
 
         // Then
         expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(valueOnForeign)
-        const events = await getEvents(erc677Token, { event: '_Mint' })
+        const events = await getEvents(erc677Token, { event: 'Mint' })
         expect(events.length).to.be.equal(1)
         expect(events[0].returnValues.to).to.be.equal(user)
         expect(events[0].returnValues.amount).to.be.equal(valueOnHome.toString())
@@ -289,7 +289,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
       // Given
       const currentDay = await homeBridge.getCurrentDay()
       expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(ZERO)
-      const initialEvents = await getEvents(erc677Token, { event: '_Mint' })
+      const initialEvents = await getEvents(erc677Token, { event: 'Mint' })
       expect(initialEvents.length).to.be.equal(0)
       expect(await erc677Token.totalSupply()).to.be.bignumber.equal(ZERO)
 
@@ -310,7 +310,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
 
       // Then
       expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(ZERO)
-      const events = await getEvents(erc677Token, { event: '_Mint' })
+      const events = await getEvents(erc677Token, { event: 'Mint' })
       expect(events.length).to.be.equal(0)
       expect(await erc677Token.totalSupply()).to.be.bignumber.equal(ZERO)
       expect(await erc677Token.balanceOf(user)).to.be.bignumber.equal(ZERO)

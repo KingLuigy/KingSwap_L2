@@ -64,11 +64,14 @@ abstract contract Erc677BridgeToken is
     /// @inheritdoc IMintableBurnable
     function mint(address to, uint256 amount) external virtual override onlyBridge {
         _mint(to, amount);
+        emit Mint(to, amount);
     }
 
     /// @inheritdoc IMintableBurnable
     function burn(uint256 amount) external override onlyBridge {
-        _burn(_msgSender(), amount);
+        address burner = _msgSender();
+        _burn(burner, amount);
+        emit Burn(burner, amount);
     }
 
     /// @inheritdoc IClaimable

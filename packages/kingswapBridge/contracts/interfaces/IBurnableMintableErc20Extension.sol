@@ -8,4 +8,7 @@ interface IBurnableMintableErc20Extension {
 
     /// @dev Destroys `amount` tokens from the caller
     function burn(uint256 amount) external;
+
+    event Mint(address indexed to, uint256 amount);
+    event Burn(address indexed burner, uint256 value);
 }
