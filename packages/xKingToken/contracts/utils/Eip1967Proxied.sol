@@ -35,7 +35,7 @@ contract Eip1967Proxied is IEip1967Proxied {
     }
 
     /// @dev Returns true if called on an EIP1967-compatible proxy
-    function isEip1967Proxy() public view returns (bool) {
+    function isEip1967Proxy() public view virtual returns (bool) {
         // Must be "external" call
         return this.proxyImplementation() != address(0);
     }

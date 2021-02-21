@@ -115,8 +115,9 @@ contract XKingToken is Eip1967Proxied, Erc677BridgeToken, DelegatableCheckpoints
         return _delegate(delegator, delegatee);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal override {
         _moveDelegates(from, to, amount);
+        super._afterTokenTransfer(from, to, amount);
     }
 
     function _votesOf(address account) internal view override returns (uint256) {
@@ -129,6 +130,6 @@ contract XKingToken is Eip1967Proxied, Erc677BridgeToken, DelegatableCheckpoints
     }
 
     function _checkExpiry(uint256 deadline) private view {
-        require(now <= deadline, "XKingToken: signature expired");
+        require(block.timestamp <= deadline, "XKingToken: signature expired");
     }
 }

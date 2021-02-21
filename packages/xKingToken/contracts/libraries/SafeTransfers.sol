@@ -9,7 +9,7 @@ pragma solidity >=0.6.0 <0.8.0;
 library SafeTransfers {
 
     bytes4 private constant SELECTOR_TRANSFER = bytes4(keccak256(bytes('transfer(address,uint256)')));
-    bytes4 private constant SELECTOR_TRANSFROM = bytes4(keccak256(bytes('transfer(address,address,uint256)')));
+    bytes4 private constant SELECTOR_TRANSFROM = bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
 
     /// @dev Same as ERC20.transfer(address,uint256) but with the returned value check
     function transfer(address token, address to, uint value) internal {
@@ -31,7 +31,7 @@ library SafeTransfers {
 }
 
 contract Sacrifice {
-    constructor(address recipient) public payable {
+    constructor(address recipient) payable {
         selfdestruct(payable(recipient));
     }
 }

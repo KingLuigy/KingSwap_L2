@@ -63,7 +63,6 @@ abstract contract Erc677BridgeToken is
 
     /// @inheritdoc IMintableBurnable
     function mint(address to, uint256 amount) external virtual override onlyBridge {
-        require(to != address(0), "BridgeToken:zero address minting");
         _mint(to, amount);
     }
 
@@ -84,6 +83,7 @@ abstract contract Erc677BridgeToken is
                 "BridgeToken: bridge call failed"
             );
         }
+        super._afterTokenTransfer(from, to, amount);
     }
 
     function _isContract(address _address) internal view virtual returns (bool) {

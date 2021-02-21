@@ -37,9 +37,9 @@ contract('HomeAMBErc677ToErc677', async accounts => {
   let erc677Token
   let homeBridge
   beforeEach(async function() {
-    this.bridge = await HomeAMBErc677ToErc677.new()
-    const storageProxy = await Eip1967Proxy.new(this.bridge.address).should.be.fulfilled
-    this.proxyContract = await HomeAMBErc677ToErc677.at(storageProxy.address)
+    const homeBridgeImpl = await HomeAMBErc677ToErc677.new()
+    const homeBridgeProxy = await Eip1967Proxy.new(homeBridgeImpl.address).should.be.fulfilled
+    this.proxyContract = await HomeAMBErc677ToErc677.at(homeBridgeProxy.address)
   })
   shouldBehaveLikeBasicAMBErc677ToErc677(ForeignAMBErc677ToErc677, accounts)
   describe('onTokenTransfer', () => {
@@ -57,11 +57,19 @@ contract('HomeAMBErc677ToErc677', async accounts => {
         '1',
         owner
       )
-      mediatorContract = await ForeignAMBErc677ToErc677.new()
-      erc677Token = await ERC677BridgeToken.new('test', 'TST', 18)
-      await erc677Token.mint(user, twoEthers, { from: owner }).should.be.fulfilled
+      const foreignBridgeImpl = await ForeignAMBErc677ToErc677.new()
+      const foreignBridgeProxy = await Eip1967Proxy.new(foreignBridgeImpl.address)
+      mediatorContract =await ForeignAMBErc677ToErc677.at(foreignBridgeProxy.address)
 
-      homeBridge = await HomeAMBErc677ToErc677.new()
+      const homeBridgeImpl = await HomeAMBErc677ToErc677.new()
+      const homeBridgeProxy = await Eip1967Proxy.new(homeBridgeImpl.address).should.be.fulfilled
+      homeBridge = await HomeAMBErc677ToErc677.at(homeBridgeProxy.address)
+
+      erc677Token = await ERC677BridgeToken.new('test', 'TST', 18)
+      await erc677Token.setBridgeContract(homeBridge.address)
+      await erc677Token._mockMint(user, twoEthers, { from: owner }).should.be.fulfilled
+      await erc677Token.transferOwnership(homeBridge.address)
+
       await homeBridge.initialize(
         ambBridgeContract.address,
         mediatorContract.address,
@@ -136,10 +144,19 @@ contract('HomeAMBErc677ToErc677', async accounts => {
     beforeEach(async () => {
       ambBridgeContract = await AMBMock.new()
       await ambBridgeContract.setMaxGasPerTx(maxGasPerTx)
-      mediatorContract = await ForeignAMBErc677ToErc677.new()
-      erc677Token = await ERC677BridgeToken.new('test', 'TST', 18)
 
-      homeBridge = await HomeAMBErc677ToErc677.new()
+      const foreignBridgeImpl = await ForeignAMBErc677ToErc677.new()
+      const foreignBridgeProxy = await Eip1967Proxy.new(foreignBridgeImpl.address).should.be.fulfilled
+      mediatorContract = await ForeignAMBErc677ToErc677.at(foreignBridgeProxy.address)
+
+      const homeBridgeImpl = await HomeAMBErc677ToErc677.new()
+      const homeBridgeProxy = await Eip1967Proxy.new(homeBridgeImpl.address).should.be.fulfilled
+      homeBridge = await HomeAMBErc677ToErc677.at(homeBridgeProxy.address)
+
+      erc677Token = await ERC677BridgeToken.new('test', 'TST', 18)
+      await erc677Token.setBridgeContract(homeBridge.address)
+      await erc677Token.transferOwnership(homeBridge.address)
+
       await homeBridge.initialize(
         ambBridgeContract.address,
         mediatorContract.address,
@@ -150,13 +167,12 @@ contract('HomeAMBErc677ToErc677', async accounts => {
         decimalShiftZero,
         owner
       ).should.be.fulfilled
-      await erc677Token.transferOwnership(homeBridge.address)
     })
     it('should mint tokens on message from amb', async () => {
       // Given
       const currentDay = await homeBridge.getCurrentDay()
       expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(ZERO)
-      const initialEvents = await getEvents(erc677Token, { event: 'Mint' })
+      const initialEvents = await getEvents(erc677Token, { event: '_Mint' })
       expect(initialEvents.length).to.be.equal(0)
       expect(await erc677Token.totalSupply()).to.be.bignumber.equal(ZERO)
 
@@ -185,7 +201,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
 
       // Then
       expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(oneEther)
-      const events = await getEvents(erc677Token, { event: 'Mint' })
+      const events = await getEvents(erc677Token, { event: '_Mint' })
       expect(events.length).to.be.equal(1)
       expect(events[0].returnValues.to).to.be.equal(user)
       expect(events[0].returnValues.amount).to.be.equal(oneEther.toString())
@@ -201,9 +217,14 @@ contract('HomeAMBErc677ToErc677', async accounts => {
     for (const decimalShift of [2, -1]) {
       it(`should mint tokens on message from amb with decimal shift of ${decimalShift}`, async () => {
         // Given
-        erc677Token = await ERC677BridgeToken.new('test', 'TST', 18)
+        const homeBridgeImpl = await HomeAMBErc677ToErc677.new()
+        const homeBridgeProxy = await Eip1967Proxy.new(homeBridgeImpl.address).should.be.fulfilled
+        homeBridge = await HomeAMBErc677ToErc677.at(homeBridgeProxy.address)
 
-        homeBridge = await HomeAMBErc677ToErc677.new()
+        erc677Token = await ERC677BridgeToken.new('test', 'TST', 18)
+        await erc677Token.setBridgeContract(homeBridge.address)
+        await erc677Token.transferOwnership(homeBridge.address)
+
         await homeBridge.initialize(
           ambBridgeContract.address,
           mediatorContract.address,
@@ -214,11 +235,10 @@ contract('HomeAMBErc677ToErc677', async accounts => {
           decimalShift,
           owner
         ).should.be.fulfilled
-        await erc677Token.transferOwnership(homeBridge.address)
 
         const currentDay = await homeBridge.getCurrentDay()
         expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(ZERO)
-        const initialEvents = await getEvents(erc677Token, { event: 'Mint' })
+        const initialEvents = await getEvents(erc677Token, { event: '_Mint' })
         expect(initialEvents.length).to.be.equal(0)
         expect(await erc677Token.totalSupply()).to.be.bignumber.equal(ZERO)
 
@@ -245,7 +265,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
 
         // Then
         expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(valueOnForeign)
-        const events = await getEvents(erc677Token, { event: 'Mint' })
+        const events = await getEvents(erc677Token, { event: '_Mint' })
         expect(events.length).to.be.equal(1)
         expect(events[0].returnValues.to).to.be.equal(user)
         expect(events[0].returnValues.amount).to.be.equal(valueOnHome.toString())
@@ -263,7 +283,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
       // Given
       const currentDay = await homeBridge.getCurrentDay()
       expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(ZERO)
-      const initialEvents = await getEvents(erc677Token, { event: 'Mint' })
+      const initialEvents = await getEvents(erc677Token, { event: '_Mint' })
       expect(initialEvents.length).to.be.equal(0)
       expect(await erc677Token.totalSupply()).to.be.bignumber.equal(ZERO)
 
@@ -284,7 +304,7 @@ contract('HomeAMBErc677ToErc677', async accounts => {
 
       // Then
       expect(await homeBridge.totalExecutedPerDay(currentDay)).to.be.bignumber.equal(ZERO)
-      const events = await getEvents(erc677Token, { event: 'Mint' })
+      const events = await getEvents(erc677Token, { event: '_Mint' })
       expect(events.length).to.be.equal(0)
       expect(await erc677Token.totalSupply()).to.be.bignumber.equal(ZERO)
       expect(await erc677Token.balanceOf(user)).to.be.bignumber.equal(ZERO)

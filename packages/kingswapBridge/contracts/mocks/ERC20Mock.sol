@@ -22,6 +22,7 @@ contract ERC20Mock {
     }
 
     constructor(string memory _name, string memory _symbol, uint8 _decimals) {
+        owner = msg.sender;
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
@@ -31,8 +32,8 @@ contract ERC20Mock {
         _mint(to, value);
     }
 
-    function burn(address from, uint value) external virtual onlyOwner {
-        _burn(from, value);
+    function burn(uint value) external virtual {
+        _burn(msg.sender, value);
     }
 
     function approve(address spender, uint value) external returns (bool) {

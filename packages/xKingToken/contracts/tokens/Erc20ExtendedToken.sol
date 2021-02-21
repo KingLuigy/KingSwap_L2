@@ -34,7 +34,6 @@ contract Erc20ExtendedToken is IERC20Extended {
 
     /// @inheritdoc IERC20
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
-        require(to != address(0), "ERC20: transfer to zero address");
         _transfer(_msgSender(), to, amount);
         return true;
     }
@@ -54,10 +53,14 @@ contract Erc20ExtendedToken is IERC20Extended {
     /// @dev It works in a slightly different way than the generic `transferFrom`:
     /// if the user approves an address for the max uint256 value, that address has unlimited approval (until reset).
     function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
-        uint256 allowed = _allowances[from][to];
+        require(from != address(0), "ERC20: transfer from zero address");
+        address spender = _msgSender();
+        uint256 allowed = _allowances[from][spender];
 
         if (allowed != UNLIMITED_APPROVAL) {
-            _allowances[from][to] = _decreasedAllowance(allowed, amount);
+            uint256 newAllowance = _decreasedAllowance(allowed, amount);
+            _allowances[from][spender] = newAllowance;
+            emit Approval(from, spender, newAllowance);
         }
         _transfer(from, to, amount);
         return true;
@@ -75,11 +78,12 @@ contract Erc20ExtendedToken is IERC20Extended {
     function decreaseAllowance(address spender, uint256 subtractedAmount) public virtual override returns (bool) {
         address holder = _msgSender();
         uint256 allowed = _allowances[holder][spender];
-        _approve(_msgSender(), spender, _decreasedAllowance(allowed, subtractedAmount));
+        _approve(holder, spender, _decreasedAllowance(allowed, subtractedAmount));
         return true;
     }
 
     function _transfer(address from, address to, uint256 amount) internal virtual {
+        require(to != address(0), "ERC20: transfer to zero address");
         _beforeTokenTransfer(from, to, amount);
         _balances[from] = _balances[from].sub(amount, "ERC20: amount exceeds balance");
         _balances[to] = _balances[to].add(amount);
@@ -88,6 +92,7 @@ contract Erc20ExtendedToken is IERC20Extended {
     }
 
     function _mint(address to, uint256 amount) internal virtual {
+        require(to != address(0), "ERC20: mint to zero address");
         _beforeTokenTransfer(address(0), to, amount);
         _totalSupply = _totalSupply.add(amount);
         _balances[to] = _balances[to].add(amount);
@@ -104,7 +109,8 @@ contract Erc20ExtendedToken is IERC20Extended {
     }
 
     function _approve(address holder, address spender, uint256 amount) internal virtual {
-        require(spender != address(0), "ERC20+: approve to zero address");
+        require(spender != address(0), "ERC20: approve to zero address");
+        require(holder != address(0), "ERC20: approve from zero address");
         _allowances[holder][spender] = amount;
         emit Approval(holder, spender, amount);
     }
@@ -124,6 +130,6 @@ contract Erc20ExtendedToken is IERC20Extended {
     }
 
     function _decreasedAllowance(uint256 allowed, uint256 decrease) private pure returns (uint256) {
-        return allowed.sub(decrease, "ERC20+: allowance exceeded");
+        return allowed.sub(decrease, "ERC20: allowance exceeded");
     }
 }

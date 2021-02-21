@@ -40,12 +40,19 @@ contract ERC677BridgeTokenMock is ERC20Mock {
         return true;
     }
 
+    event _Mint(address indexed to, uint256 amount);
     function mint(address to, uint256 amount) external virtual override onlyBridge {
+        require(to != address(0), "mint: zero address minting");
+        _mint(to, amount);
+        emit _Mint(to, amount);
+    }
+
+    function _mockMint(address to, uint256 amount) external {
         require(to != address(0), "mint: zero address minting");
         _mint(to, amount);
     }
 
-    function burn(uint256 amount) external onlyBridge {
+    function burn(uint256 amount) external override onlyBridge {
         _burn(msg.sender, amount);
     }
 }
