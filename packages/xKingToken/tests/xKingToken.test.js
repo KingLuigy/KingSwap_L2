@@ -11,6 +11,7 @@ const {
 } = require('./helpers/ERC20.behavior');
 
 const XKingToken = artifacts.require('XKingTokenMock');
+const ERC677Receiver = artifacts.require('ERC677ReceiverMock');
 
 contract('ERC20', function (accounts) {
   const [ initialHolder, recipient, anotherAccount ] = accounts;
@@ -300,6 +301,26 @@ contract('ERC20', function (accounts) {
             'ERC20: approve from zero address',
         );
       });
+    });
+  });
+
+  describe('transferAndCall', function () {
+    it('transfers tokens to an EOA', async function () {
+      const receiver = anotherAccount;
+      this.token.transferAndCall(receiver, '17', [], { from: initialHolder });
+      expect(await this.token.balanceOf(receiver)).to.be.bignumber.equal('17');
+    });
+
+    it('transfers tokens calling the receiver if it\'s a contract', async function () {
+      const receiver = await ERC677Receiver.new();
+      const calldata = receiver.contract.methods.doSomething(123).encodeABI();
+
+      await this.token.transferAndCall(receiver.address, '19', calldata, { from: initialHolder });
+
+      expect(await this.token.balanceOf(receiver.address)).to.be.bignumber.equal('19');
+      expect(await receiver.from()).to.be.equal(initialHolder)
+      expect(await receiver.value()).to.be.bignumber.equal('19')
+      expect(await receiver.data()).to.be.equal(calldata)
     });
   });
 });
