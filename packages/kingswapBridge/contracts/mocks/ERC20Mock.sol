@@ -54,6 +54,8 @@ contract ERC20Mock {
     }
 
     function _transfer(address from, address to, uint value) internal {
+        require(to != address(0), "transfer to zero address");
+        require(from != address(0), "transfer from zero address");
         balanceOf[from] = balanceOf[from].sub(value);
         balanceOf[to] = balanceOf[to].add(value);
         emit Transfer(from, to, value);

@@ -9,11 +9,11 @@ module.exports = {
 
   // AMB-extension contract (aka "mediator") for ERC20 on the layer1 chain
   ambErc20ExtAddress: '0xD1843507c588e5D0e11413b29779cC97E14e0242', // proxy
-  ambErc20ExtImplAddress: '0xdd41339C7F3E34AbE98700d991465bc6D2B56c02', // implementation
+  ambErc20ExtImplAddress: '0xa79fd1714b10e8711515BE483eA7A031506393b7', // implementation
 
   // AMB-mediator contract (aka "mediator") for ERC20 on the side-chain
   xAmbErc20ExtAddress: '0x4c9c971fbEFc93E0900988383DC050632dEeC71E', // proxy
-  xAmbErc20ExtImplAddress: '0x378A34766e47fCA04c02d52b3836F4F171b52094', // implementation
+  xAmbErc20ExtImplAddress: '0x55fc5283890Dd1E394B14d918B90a9FB88821fD4', // implementation
 
   // AMB-mediator contract (aka "mediator") for ERC1155 on the layer1 chain
   ambErc1155ExtAddress: '0x24DD13C6b54E1538061FE8cda14E0C7F27BE9363', // proxy
