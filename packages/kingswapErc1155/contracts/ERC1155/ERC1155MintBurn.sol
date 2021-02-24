@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 
 import "./ERC1155PackedBalance.sol";
 
@@ -8,7 +8,18 @@ import "./ERC1155PackedBalance.sol";
  * @dev Multi-Fungible Tokens with minting and burning methods. These methods assume
  *      a parent contract to be executed as they are `internal` functions.
  */
-contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
+contract ERC1155MintBurn is ERC1155PackedBalance {
+
+    address internal constant _supplyHandler = address(0x0);
+
+    /**
+     * @notice Get the total supply of the Token type requested
+     * @param _id ID of the Token
+     * @return The total supply
+     */
+    function totalSupply(uint256 _id) public view returns (uint256) {
+        return _balanceOf(_supplyHandler, _id);
+    }
 
     /****************************************|
     |            Minting Functions           |
@@ -25,13 +36,14 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
     internal
     {
         //Add _amount
-        _updateIDBalance(_to,   _id, _amount, Operations.Add); // Add amount to recipient
+        _updateIDBalance(_to,   _id, _amount, Operations.Add); // recipient balance
+        _updateIDBalance(_supplyHandler,   _id, _amount, Operations.Add); // total supply
 
         // Emit event
         emit TransferSingle(msg.sender, address(0x0), _to, _id, _amount);
 
         // Calling onReceive method if recipient is contract
-        _callonERC1155Received(address(0x0), _to, _id, _amount, gasleft(), _data);
+        _callOnERC1155Received(address(0x0), _to, _id, _amount, gasleft(), _data);
     }
 
     /**
@@ -41,17 +53,18 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
      * @param _amounts  Array of amount of tokens to mint per id
      * @param _data    Data to pass if receiver is contract
      */
-    function _batchMint(address _to, uint256[] memory _ids, uint256[] memory _amounts, bytes memory _data)
+    function _mintBatch(address _to, uint256[] memory _ids, uint256[] memory _amounts, bytes memory _data)
     internal
     {
-        require(_ids.length == _amounts.length, "ERC1155MintBurnPackedBalance#_batchMint: INVALID_ARRAYS_LENGTH");
+        require(_ids.length == _amounts.length, "ERC1155:INVALID_ARRAYS_LENGTH");
 
         if (_ids.length > 0) {
             // Load first bin and index where the token ID balance exists
             (uint256 bin, uint256 index) = getIDBinIndex(_ids[0]);
 
-            // Balance for current bin in memory (initialized with first transfer)
+            // Update receiver balance(s) and total supply(s) (in memory only) for the first transfer
             uint256 balTo = _viewUpdateBinValue(balances[_to][bin], index, _amounts[0], Operations.Add);
+            uint256 supply = _viewUpdateBinValue(balances[_supplyHandler][bin], index, _amounts[0], Operations.Add);
 
             // Number of transfer to execute
             uint256 nTransfer = _ids.length;
@@ -64,23 +77,27 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
 
                 // If new bin
                 if (bin != lastBin) {
-                    // Update storage balance of previous bin
-                    balances[_to][lastBin] = balTo;
+                    // Update storage of previous bin
+                    balances[_to][lastBin] = balTo; // receiver balance(s)
                     balTo = balances[_to][bin];
+                    balances[_supplyHandler][lastBin] = supply; // total supply(s)
+                    supply = balances[_supplyHandler][bin];
 
                     // Bin will be the most recent bin
                     lastBin = bin;
                 }
 
-                // Update memory balance
+                // Update receiver balance(s) and total supply(s) (in memory only)
                 balTo = _viewUpdateBinValue(balTo, index, _amounts[i], Operations.Add);
+                supply = _viewUpdateBinValue(supply, index, _amounts[i], Operations.Add);
             }
 
             // Update storage of the last bin visited
-            balances[_to][bin] = balTo;
+            balances[_to][bin] = balTo; // receiver balance(s)
+            balances[_supplyHandler][bin] = supply; // total supply(s)
         }
 
-        // //Emit event
+        //Emit event
         emit TransferBatch(msg.sender, address(0x0), _to, _ids, _amounts);
 
         // Calling onReceive method if recipient is contract
@@ -102,7 +119,8 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
     internal
     {
         // Substract _amount
-        _updateIDBalance(_from, _id, _amount, Operations.Sub);
+        _updateIDBalance(_from, _id, _amount, Operations.Sub); //  burner balance
+        _updateIDBalance(_supplyHandler,   _id, _amount, Operations.Sub); // total supply
 
         // Emit event
         emit TransferSingle(msg.sender, _from, address(0x0), _id, _amount);
@@ -118,17 +136,18 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
      * @param _ids      Array of token ids to burn
      * @param _amounts  Array of the amount to be burned
      */
-    function _batchBurn(address _from, uint256[] memory _ids, uint256[] memory _amounts)
+    function _burnBatch(address _from, uint256[] memory _ids, uint256[] memory _amounts)
     internal
     {
         // Number of burning to execute
         uint256 nBurn = _ids.length;
-        require(nBurn == _amounts.length, "ERC1155MintBurnPackedBalance#batchBurn: INVALID_ARRAYS_LENGTH");
+        require(nBurn == _amounts.length, "ERC1155:INVALID_ARRAYS_LENGTH");
 
         // Executing all burning
         for (uint256 i = 0; i < nBurn; i++) {
-            // Update storage balance
-            _updateIDBalance(_from,   _ids[i], _amounts[i], Operations.Sub); // Add amount to recipient
+            // Update storage
+            _updateIDBalance(_from,   _ids[i], _amounts[i], Operations.Sub); // burner balance
+            _updateIDBalance(_supplyHandler,  _ids[i], _amounts[i], Operations.Sub); // total supply
         }
 
         // Emit batch burn event

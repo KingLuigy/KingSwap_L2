@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "./ERC1155PackedBalance.sol";
-import "../../interfaces/IERC20.sol";
-import "../../interfaces/IERC1155.sol";
-import "../../utils/LibBytes.sol";
-import "../../utils/SignatureValidator.sol";
+import "../interfaces/IERC20Minimal.sol";
+import "../interfaces/IERC1155.sol";
+import "../libraries/LibBytes.sol";
+import "../utils/SignatureValidator.sol";
 
 
 /**
@@ -16,7 +16,7 @@ import "../../utils/SignatureValidator.sol";
  * Note: This contract is identical to the ERC1155Meta.sol contract,
  *       except for the ERC1155PackedBalance parent contract.
  */
-contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
+contract ERC1155Meta is ERC1155PackedBalance, SignatureValidator {
     using LibBytes for bytes;
 
     /***********************************|
@@ -43,6 +43,13 @@ contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
         ERC20,      // 0x01, ERC-20 token
         NTypes      // 0x02, number of signature types. Always leave at end.
     }
+
+    // EIP712 niceties
+    bytes32 public constant DOMAIN_TYPEHASH = keccak256(
+        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+    );
+    /// @notice EIP712 Domain separator
+    bytes32 public DOMAIN_SEPARATOR;
 
     // Signature nonce per address
     mapping (address => uint256) internal nonces;
@@ -82,7 +89,7 @@ contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
         bytes memory _data)
     public
     {
-        require(_to != address(0), "ERC1155Meta:INVALID_RECIPIENT");
+        requireNonZeroTo(_to);
 
         // Initializing
         bytes memory transferData;
@@ -113,13 +120,13 @@ contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
             // Hence we only pass the gasLimit to the recipient such that the relayer knows the griefing
             // limit. Nothing can prevent the receiver to revert the transaction as close to the gasLimit as
             // possible, but the relayer can now only accept meta-transaction gasLimit within a certain range.
-            _callonERC1155Received(_from, _to, _id, _amount, gasReceipt.gasLimitCallback, transferData);
+            _callOnERC1155Received(_from, _to, _id, _amount, gasReceipt.gasLimitCallback, transferData);
 
             // Transfer gas cost
             _transferGasFee(_from, gasReceipt);
 
         } else {
-            _callonERC1155Received(_from, _to, _id, _amount, gasleft(), signedData);
+            _callOnERC1155Received(_from, _to, _id, _amount, gasleft(), signedData);
         }
     }
 
@@ -146,7 +153,7 @@ contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
         bytes memory _data)
     public
     {
-        require(_to != address(0), "ERC1155Meta:INVALID_RECIPIENT");
+        requireNonZeroTo(_to);
 
         // Initializing
         bytes memory transferData;
@@ -227,10 +234,7 @@ contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
         );
 
         // Update operator status
-        operators[_owner][_operator] = _approved;
-
-        // Emit event
-        emit ApprovalForAll(_owner, _operator, _approved);
+        _setApprovalForAll(_operator, _approved);
 
         // Handle gas reimbursement
         if (_isGasFee) {
@@ -238,7 +242,6 @@ contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
             _transferGasFee(_owner, gasReceipt);
         }
     }
-
 
 
     /****************************************|
@@ -362,7 +365,7 @@ contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
                 _safeTransferFrom(_from, feeRecipient, tokenID, fee);
 
                 // No need to protect against griefing since recipient (if contract) is most likely owned by the relayer
-                _callonERC1155Received(_from, feeRecipient, tokenID, gasleft(), fee, "");
+                _callOnERC1155Received(_from, feeRecipient, tokenID, gasleft(), fee, "");
 
                 // Fee is paid from another ERC-1155 contract
             } else {
@@ -373,7 +376,7 @@ contract ERC1155MetaPackedBalance is ERC1155PackedBalance, SignatureValidator {
         } else {
             tokenAddress = abi.decode(_g.feeTokenData, (address));
             require(
-                IERC20(tokenAddress).transferFrom(_from, feeRecipient, fee),
+                IERC20Minimal(tokenAddress).transferFrom(_from, feeRecipient, fee),
                 "ERC1155MetaPackedBalance#_transferGasFee: ERC20_TRANSFER_FAILED"
             );
         }

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 
-import "../../utils/SafeMath.sol";
-import "../../interfaces/IERC1155TokenReceiver.sol";
-import "../../interfaces/IERC1155.sol";
-import "../../utils/Address.sol";
-import "../../utils/ERC165.sol";
+import "../interfaces/IERC1155TokenReceiver.sol";
+import "../interfaces/IERC1155.sol";
+import "../libraries/Address.sol";
+import "../utils/ERC165.sol";
 
 
 /**
@@ -17,7 +16,6 @@ import "../../utils/ERC165.sol";
  *      did not lead to major efficiency gains.
  */
 contract ERC1155PackedBalance is IERC1155, ERC165 {
-    using SafeMath for uint256;
     using Address for address;
 
     /***********************************|
@@ -59,8 +57,9 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
     public override
     {
         // Requirements
-        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "ERC1155:INVALID_OPERATOR");
-        require(_to != address(0),"ERC1155:INVALID_RECIPIENT");
+        requireNonZeroFrom(_from);
+        requireNonZeroTo(_to);
+        requireApprovedOperator(_from, msg.sender);
         // require(_amount <= balances);  Not necessary since checked with _viewUpdateBinValue() checks
 
         _safeTransferFrom(_from, _to, _id, _amount);
@@ -80,8 +79,9 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
     public override
     {
         // Requirements
-        require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "ERC1155:INVALID_OPERATOR");
-        require(_to != address(0),"ERC1155:INVALID_RECIPIENT");
+        requireNonZeroFrom(_from);
+        requireNonZeroTo(_to);
+        requireApprovedOperator(_from, msg.sender);
 
         _safeBatchTransferFrom(_from, _to, _ids, _amounts);
         _callonERC1155BatchReceived(_from, _to, _ids, _amounts, gasleft(), _data);
@@ -119,7 +119,7 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
         // Check if recipient is contract
         if (_to.isContract()) {
             bytes4 retval = IERC1155TokenReceiver(_to).onERC1155Received{gas:_gasLimit}(msg.sender, _from, _id, _amount, _data);
-            require(retval == ERC1155_RECEIVED_VALUE, "ERC1155:INVALID_ON_RECEIVE_MESSAGE.1");
+            require(retval == ERC1155_RECEIVED_VALUE, "ERC1155:INVALID_ON_RECEIVE_MSG");
         }
     }
 
@@ -176,7 +176,7 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
             // If transfer to self, just make sure all amounts are valid
         } else {
             for (uint256 i = 0; i < nTransfer; i++) {
-                require(balanceOf(_from, _ids[i]) >= _amounts[i], "ERC1155:UNDERFLOW.1");
+                require(balanceOf(_from, _ids[i]) >= _amounts[i], "ERC1155:BALANCE_EXCEEDED");
             }
         }
 
@@ -193,7 +193,7 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
         // Pass data if recipient is contract
         if (_to.isContract()) {
             bytes4 retval = IERC1155TokenReceiver(_to).onERC1155BatchReceived{gas: _gasLimit}(msg.sender, _from, _ids, _amounts, _data);
-            require(retval == ERC1155_BATCH_RECEIVED_VALUE, "ERC1155:INVALID_ON_RECEIVE_MESSAGE.2");
+            require(retval == ERC1155_BATCH_RECEIVED_VALUE, "ERC1155:INVALID_ON_RECEIVE_MSG");
         }
     }
 
@@ -210,9 +210,7 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
     function setApprovalForAll(address _operator, bool _approved)
     external override
     {
-        // Update operator status
-        operators[msg.sender][_operator] = _approved;
-        emit ApprovalForAll(msg.sender, _operator, _approved);
+        _setApprovalForAll(_operator, _approved);
     }
 
     /**
@@ -222,11 +220,25 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
      * @return isOperator True if the operator is approved, false if not
      */
     function isApprovedForAll(address _owner, address _operator)
-    public override view returns (bool isOperator)
+    public override virtual view returns (bool isOperator)
     {
         return operators[_owner][_operator];
     }
 
+    function requireApprovedOperator(address _owner, address _operator) internal view {
+        require(
+            (_operator != address(0x0)) && (
+            (_owner == _operator) || isApprovedForAll(_owner, _operator)
+        ),
+            "ERC1155:INVALID_OPERATOR"
+        );
+    }
+
+    function _setApprovalForAll(address _operator, bool _approved) internal {
+        // Update operator status
+        operators[msg.sender][_operator] = _approved;
+        emit ApprovalForAll(msg.sender, _operator, _approved);
+    }
 
     /***********************************|
     |     Public Balance Functions      |
@@ -238,15 +250,11 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
      * @param _id     ID of the Token
      * @return The _owner's balance of the Token type requested
      */
-    function balanceOf(address _owner, uint256 _id)
-    public override view returns (uint256)
-    {
-        uint256 bin;
-        uint256 index;
-
-        //Get bin and index of _id
-        (bin, index) = getIDBinIndex(_id);
-        return getValueInBin(balances[_owner][bin], index);
+    function balanceOf(
+        address _owner,
+        uint256 _id
+    ) public override virtual view returns (uint256) {
+        return _balanceOf(_owner, _id);
     }
 
     /**
@@ -286,6 +294,14 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
         return batchBalances;
     }
 
+    function _balanceOf(address _owner, uint256 _id) internal view returns (uint256) {
+        uint256 bin;
+        uint256 index;
+
+        //Get bin and index of _id
+        (bin, index) = getIDBinIndex(_id);
+        return getValueInBin(balances[_owner][bin], index);
+    }
 
     /***********************************|
     |      Packed Balance Functions     |
@@ -338,14 +354,14 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
 
         } else if (_operation == Operations.Sub) {
             newBinValues = _binValues - (_amount << shift);
-            require(newBinValues <= _binValues, "ERC1155:UNDERFLOW.2");
+            require(newBinValues <= _binValues, "ERC1155:BALANCE_EXCEEDED");
             require(
                 ((_binValues >> shift) & mask) >= _amount, // Checks that no other id changed
-                "ERC1155:UNDERFLOW.3"
+                "ERC1155:UNDERFLOW.2"
             );
 
         } else {
-            revert("ERC1155:INVALID_BIN_WRITE_OPERATION"); // Bad operation
+            revert("ERC1155:INVALID_BIN_OPERATION"); // Bad operation
         }
 
         return newBinValues;
@@ -398,5 +414,17 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
             return true;
         }
         return super.supportsInterface(_interfaceID);
+    }
+
+    /***********************************|
+    |     Internal Helper Functions      |
+    |__________________________________*/
+
+    function requireNonZeroFrom(address _to) internal pure {
+        require(_to != address(0),"ERC1155:SENDER_IS_ZERO_ADDRESS");
+    }
+
+    function requireNonZeroTo(address _to) internal pure {
+        require(_to != address(0),"ERC1155:RECEIVER_IS_ZERO_ADDRESS");
     }
 }
