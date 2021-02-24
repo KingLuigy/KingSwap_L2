@@ -27,7 +27,7 @@ interface IERC1155MintBurn {
      * @param _amounts Array of amount of tokens to mint per id
      * @param _data    Byte array of data to pass to recipient if it's a contract
      */
-    function batchMint(address _to, uint256[] calldata _ids, uint256[] calldata _amounts, bytes calldata _data) external;
+    function mintBatch(address _to, uint256[] calldata _ids, uint256[] calldata _amounts, bytes calldata _data) external;
 
 
     /***************************************|
@@ -48,5 +48,5 @@ interface IERC1155MintBurn {
      * @param _ids      Array of token ids to burn
      * @param _amounts  Array of the amount to be burned
      */
-    function batchBurn(address _from, uint256[] calldata _ids, uint256[] calldata _amounts) external;
+    function burnBatch(address _from, uint256[] calldata _ids, uint256[] calldata _amounts) external;
 }

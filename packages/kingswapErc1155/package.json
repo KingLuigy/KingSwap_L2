@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "./scripts/test.sh tests/*.js",
-    "clean": "rm -fr build/contracts && rm -fr contracts/NetworkParams.sol",
+    "clean": "rm -fr build/contracts",
     "build": "npm run clean && npm run compile",
     "compile": "npx truffle compile"
   }
