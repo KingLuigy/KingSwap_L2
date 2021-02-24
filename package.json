@@ -2,9 +2,13 @@
   "name": "root",
   "private": false,
   "devDependencies": {
+    "@truffle/hdwallet-provider": "^1.2.2",
+    "eth-gas-reporter": "^0.2.21",
     "ganache-cli": "^6.12.2",
     "lerna": "^3.21.0",
-    "@truffle/hdwallet-provider": "^1.2.2"
+    "truffle": "^5.1.67",
+    "truffle-flattener": "^1.5.0",
+    "truffle-plugin-verify": "^0.5.4"
   },
   "scripts": {
     "bootstrap": "lerna bootstrap",
