@@ -34,5 +34,5 @@ module.exports = {
   Erc1155Address: '0x0000000000000000000000000000000000000000', // ToDo: update
   // ERC1155 on the side-chain (original tokens)
   xErc1155Address: '0xe26e5c3297e00321683Ca5aB242A77bef947E3e9', // proxy
-  xErc1155ImplAddress: '0x0000000000000000000000000000000000000000', // implementation // ToDo: update
+  xErc1155ImplAddress: '0xD268e1D0d7EfF481A989772988B00e2Bb3d90685', // implementation
 }
