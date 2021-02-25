@@ -7,7 +7,10 @@ pragma solidity >=0.6.0 <0.8.0;
 
 /// @dev Network-dependant params (i.e. addresses, block numbers, etc..)
 contract NetworkParams {
-    // AMB-extension contract (aka "mediator") for ERC20 on the side-chain ("${'side-chain'}")
+    // AMB-extension contract (aka "mediator") for ERC20 (new $KING) on the side-chain ("${'side-chain'}")
     address internal constant xAmbErc20ExtAddress  = ${'xAmbErc20ExtAddress'};
+
+    // AMB-extension contract (aka "mediator") for ERC20 (old $KING) on the side-chain ("${'side-chain'}")
+    address internal constant xOldAmbErc20ExtAddress  = ${'xOldAmbErc20ExtAddress'};
 }
 `([__dirname, '../contracts/NetworkParams.sol'])
