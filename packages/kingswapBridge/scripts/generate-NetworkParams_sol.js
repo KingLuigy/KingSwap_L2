@@ -11,7 +11,7 @@ contract NetworkParams {
     // Side-chain (aka "foreign"): "${'side-chain'}" 
 
     /*
-    // == HomeAMBErc677ToErc677::initilize() params ==
+    // == HomeAMBErc677ToErc677::initilize() params for $KING->x$KING (aka "new" $KING) ==
     // the AMB bridge contract on the side-chain
     _bridgeContract = ${'xAmbAddress'};
     // the mediator contract on the layer1 chain
@@ -19,13 +19,29 @@ contract NetworkParams {
     // the ERC20/ERC677 contract on the side-chain
     _erc677token = ${'xKingTokenAddress'};
 
-    // == ForeignAMBErc677ToErc677::initilize() params ==
+    // == HomeAMBErc677ToErc677::initilize() params for old$KING->xo$KING (aka "old" $KING) ==
+    // the AMB bridge contract on the side-chain
+    _bridgeContract = ${'xAmbAddress'};
+    // the mediator contract on the layer1 chain
+    _mediatorContract = ${'ambOldErc20ExtAddress'}
+    // the ERC20/ERC677 contract on the side-chain
+    _erc677token = ${'xoKingTokenAddress'};
+
+    // == ForeignAMBErc677ToErc677::initilize() params for $KING->x$KING (aka "new" $KING) ==
     // the AMB bridge contract on the layer1 chain
     _bridgeContract = ${'ambAddress'};
     // the mediator contract on the side-chain
     _mediatorContract = ${'xAmbErc20ExtAddress'}
     // the ERC20/ERC677 contract on the layer1 chain
     _erc677token = ${'kingTokenAddress'};
+
+    // == ForeignAMBErc677ToErc677::initilize() params for old$KING->xo$KING (aka "old" $KING) ==
+    // the AMB bridge contract on the layer1 chain
+    _bridgeContract = ${'ambAddress'};
+    // the mediator contract on the side-chain
+    _mediatorContract = ${'xOldAmbErc20ExtAddress'}
+    // the ERC20/ERC677 contract on the layer1 chain
+    _erc677token = ${'kingOldTokenAddress'};
 
     // Limits per transaction in Wei [ _dailyLimit, _maxPerTx, _minPerTx ]
     // As soon as the limit is exceeded, transactions will fall
