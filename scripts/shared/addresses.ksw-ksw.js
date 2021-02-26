@@ -7,23 +7,27 @@ module.exports = {
   // AMB contract on the side-chain
   xAmbAddress: '0xFd74522B1705579f69670e8Ba201624B2414CA8C', // accounts[9]
 
-  // AMB-mediator (extension) contract for ERC20 on the layer1 chain
+  // AMB-extension contract for $KING->x$KING (aka "new" $KING) on the layer1 chain
   ambErc20ExtAddress: '0x01d119AcB7f0E7DF376490e3B0c5548B7c82aE2F', // accounts[6]
-  // AMB-mediator (extension) contract for ERC20 on the side-chain
+
+  // AMB-extension contract for old$KING->xo$KING (aka "old" $KING) on the layer1 chain
+  ambOldErc20ExtAddress: '0x0000000000000000000000000000000000000000', // accounts[5]
+
+  // AMB-mediator contract for $KING->x$KING (aka "new" $KING) on the side-chain
   xAmbErc20ExtAddress: '0x04557A287f4f4d2cc8fB0ffF0ea910dfb8b442fF', // accounts[7]
 
-  // AMB-mediator (extension) contract for ERC1155 on the layer1 chain
-  ambErc1155ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
-  // AMB-mediator (extension) contract for ERC1155 on the side-chain
-  xAmbErc1155ExtAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
+  // AMB-mediator contract for old$KING->xo$KING (aka "old" $KING) on the side-chain
+  xOldAmbErc20ExtAddress: '0x0000000000000000000000000000000000000000', // accounts[4]
 
-  // $KING token on the layer1 chain (original token)
+  // $KING token (aka "new" $KING) on the layer1 chain (original token)
   kingTokenAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
+
+  // xo$KING token on the side-chain (replica of the old$KING)
+  xoKingTokenAddress: '0x0000000000000000000000000000000000000000', // proxy
+
+  // old$KING token (aka "old" $KING) on the layer1 chain (original token)
+  kingOldTokenAddress: '0x0000000000000000000000000000000000000000', // un-proxied
+
   // x$KING token on the side-chain (replica of the $KING)
   xKingTokenAddress: '0x0000000000000000000000000000000000000000', // ToDo: update
-
-  // ERC1155 on the layer1 chain (replica of the side-chain ERC1155)
-  Erc1155Address: '0x0000000000000000000000000000000000000000', // ToDo: update
-  // ERC1155 on the side-chain (original tokens)
-  xErc1155Address: '0x0000000000000000000000000000000000000000', // ToDo: update
 }
