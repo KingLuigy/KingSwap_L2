@@ -13,7 +13,7 @@ module.exports = {
 
   // AMB-extension contract for old$KING->xo$KING (aka "old" $KING) on the layer1 chain
   ambOldErc20ExtAddress: '0x24DD13C6b54E1538061FE8cda14E0C7F27BE9363', // proxy
-  ambOldErc20ExtImplAddress: '0x0000000000000000000000000000000000000000', // implementation
+  ambOldErc20ExtImplAddress: '0xC604A898bd253C43595808298b3Baac57926F858', // implementation
 
   // AMB-mediator contract for $KING->x$KING (aka "new" $KING) on the side-chain
   xAmbErc20ExtAddress: '0x4c9c971fbEFc93E0900988383DC050632dEeC71E', // proxy
@@ -21,7 +21,7 @@ module.exports = {
 
   // AMB-mediator contract for old$KING->xo$KING (aka "old" $KING) on the side-chain
   xOldAmbErc20ExtAddress: '0x4EdC94bC630Ee57A7D3FFeDaa03498430B7353ED', // proxy
-  xOldAmbErc20ExtImplAddress: '0x0000000000000000000000000000000000000000', // implementation
+  xOldAmbErc20ExtImplAddress: '0x400294716f347532107D7e2d034BA1fcb4fb84b7', // implementation
 
   // $KING token (aka "new" $KING) on the layer1 chain (original token)
   kingTokenAddress: '0xd2057d71fe3f5b0dc1e3e7722940e1908fc72078', // un-proxied
