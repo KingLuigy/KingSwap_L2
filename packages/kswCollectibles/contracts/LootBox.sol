@@ -370,22 +370,26 @@ contract LootBox is Ownable, Pausable, ReentrancyGuard {
     }
 
     function setOverallProb(uint256 _prob) public onlyOwner{
-        require(_prob > 0, "Prob cannot be less than 0");
+        _revertZeroProb(_prob);
         OVERALL_PROBABILITY = _prob;
     }
 
     function setCommonProb(uint256 _prob) public onlyOwner{
-        require(_prob > 0, "Prob cannot be less than 0");
+        _revertZeroProb(_prob);
         COMMON_PROBABILITY = _prob;
     }
 
     function setLegendaryProb(uint256 _prob) public onlyOwner{
-        require(_prob > 0, "Prob cannot be less than 0");
+        _revertZeroProb(_prob);
         RARE_PROBABILITY = _prob;
     }
 
     function setRareProb(uint256 _prob) public onlyOwner{
-        require(_prob > 0, "Prob cannot be less than 0");
+        _revertZeroProb(_prob);
         LEGENDARY_PROBABILITY = _prob;
+    }
+
+    function _revertZeroProb(uint256 _prob) private pure {
+        require(_prob > 0, "Prob cannot be less than 0");
     }
 }

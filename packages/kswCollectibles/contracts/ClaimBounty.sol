@@ -18,7 +18,7 @@ contract ClaimBounty is Ownable, Pausable {
         // Amount in ERC20-token units (aka bounty)
         uint248 prize;
         // IDs of ERC-1155 tokens to exchange for the "prize"
-        uint16[] tokensIds;
+        uint8[] tokensIds;
         // Number of ERC-1155 tokens to exchange for the "prize"
         uint16[] tokensAmounts;
     }
@@ -29,12 +29,12 @@ contract ClaimBounty is Ownable, Pausable {
     IKingERC1155 public erc1155;
     IERC20 public prizeErc20;
 
-    constructor(IKingERC1155 _erc1155, address  _treasury, address _erc20) {
+    constructor(address _erc1155, address  _treasury, address _erc20) {
         _revertZeroAddress(_erc1155);
         _revertZeroAddress(_erc20);
         _revertZeroAddress(_treasury);
 
-        erc1155 = _erc1155;
+        erc1155 = IKingERC1155(_erc1155);
         prizeErc20 = IERC20(_erc20);
         treasury = _treasury;
     }
@@ -42,11 +42,19 @@ contract ClaimBounty is Ownable, Pausable {
     function claim(uint256 termsId) public {
         BountyTerms memory bt = bountyTerms(termsId);
         require(bt.availableQty > 0, "No more prizes available");
-        erc1155.burnBatch(msg.sender, bt.tokensIds, bt.tokensAmounts);
-        prizeErc20.safeTransferFrom(treasury, msg.sender, bt.prize);
-        if(bt.availableQty != 255) {
-            _bountiesTerms[termsId - 1] = bt.availableQty - 1;
+
+        if (bt.availableQty != 255) {
+            _bountiesTerms[termsId - 1].availableQty = bt.availableQty - 1;
         }
+        uint256[] memory ids;
+        uint256[] memory amounts;
+        for (uint256 i = 0; i < bt.tokensIds.length; i++) {
+            ids[i] = uint256(bt.tokensIds[i]);
+            amounts[i] = uint256(bt.tokensAmounts[i]);
+        }
+
+        erc1155.burnBatch(msg.sender, ids, amounts);
+        prizeErc20.safeTransferFrom(treasury, msg.sender, bt.prize);
     }
 
     function bountyTerms(uint256 termsId) public view returns(BountyTerms memory bt) {
@@ -85,7 +93,7 @@ contract ClaimBounty is Ownable, Pausable {
         _bountiesTerms.push(bt);
     }
 
-    function _isUniqNftTokenIds(uint16[] memory _ids) internal pure returns(bool) {
+    function _isUniqNftTokenIds(uint8[] memory _ids) internal pure returns(bool) {
         uint8[256] memory map;
         for(uint i = 0 ;  i < _ids.length ; i++) {
             if (map[i] != 0) return false;
