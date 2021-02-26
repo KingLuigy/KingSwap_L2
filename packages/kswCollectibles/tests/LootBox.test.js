@@ -5,7 +5,7 @@ const ClaimBounty = artifacts.require("ClaimBounty");
 
 const xKingErc1155Abi = require("../resources/kingswap_l2/kingswapErc1155/XKingERC1155Mock.json");
 const xKingTokenAbi = require("../resources/kingswap_l2/xkingtoken/XKingTokenMock.json");
-const xOldKingTokenAbi = require("../resources/kingswap_v2/KingToken.json");
+const xoKingTokenAbi = require("../resources/kingswap_l2/xkingtoken/XoKingTokenMock.json");
 
 contract("LootBox", (accounts) => {
   const e18 = "000000000000000000";
@@ -15,17 +15,23 @@ contract("LootBox", (accounts) => {
     this.xking = await (
         new web3.eth.Contract(xKingTokenAbi.abi, { data: xKingTokenAbi.bytecode })
     ).deploy().send(txOpts);
+    console.log('*** DEBUG 1:', await web3.eth.getBlockNumber())
     await this.xking.methods._mintMock(accounts[0], `${100e6}` + e18).send(txOpts);
+    console.log('*** DEBUG 2:', await web3.eth.getBlockNumber())
 
-    this.oldxking = await (
-        new web3.eth.Contract(xOldKingTokenAbi.abi, { data: xOldKingTokenAbi.bytecode })
+    this.xoldxking = await (
+        new web3.eth.Contract(xoKingTokenAbi.abi, { data: xoKingTokenAbi.bytecode })
     ).deploy().send(txOpts);
-    await this.oldxking.methods._mintMock(accounts[0], `${100e6}` + e18).send(txOpts);
+    console.log('*** DEBUG 3:', await web3.eth.getBlockNumber())
+    await this.xoldxking.methods._mintMock(accounts[0], `${100e6}` + e18).send(txOpts);
+    console.log('*** DEBUG 4:', await web3.eth.getBlockNumber())
 
     this.kingERC1155 = await (
         new web3.eth.Contract(xKingErc1155Abi.abi, { data: xKingErc1155Abi.bytecode })
-    ).deploy().send(txOpts)
+    ).deploy().send({from: accounts[1], gas: 5000000})
+    console.log('*** DEBUG 5:', await web3.eth.getBlockNumber())
     await this.kingERC1155.methods._simulateEip1967Proxy(accounts[0]).send(txOpts);
+    console.log('*** DEBUG 6:', await web3.eth.getBlockNumber())
 
     this.lootbox = await LootBox.new(
         accounts[0],
@@ -42,23 +48,23 @@ contract("LootBox", (accounts) => {
     let count = 0;
     for (i = 0; i <= 60; i++) {
       id[i] = i;
-      if(i == 1){
+      if(i === 1){
         bal[i] = 255;
-      }else if (i%3 == 0){
+      } else if (i%3 === 0){
         bal[i] = 255;
       } else {
         bal[i] = 255;
       }
-      if(i == 0 ){
+      if(i === 0 ){
         prob[i] = 0;
       }
-      if(count == 1){
+      if(count === 1){
         prob[i] = 9200;
       }
-      if(count == 2){
+      if(count === 2){
         prob[i] = 770;
       }
-      if(count == 3){
+      if(count === 3){
         prob[i] = 30;
         count = 0;
       }
@@ -73,12 +79,14 @@ contract("LootBox", (accounts) => {
         this.kingERC1155.options.address,
         accounts[0],
         this.xking.options.address,
-        { from: accounts[0] }
+        txOpts
     );
 
     await this.kingERC1155.methods.setCreator(this.lootbox.address, true).send(txOpts);
     await this.kingERC1155.methods.setCreator(accounts[0], true).send(txOpts);
     await this.kingERC1155.methods.setCreator(this.claimBounty.address, true).send(txOpts);
+
+    await this.kingERC1155.methods.createBatch(accounts[0], new Array(60).fill(0)).send(txOpts);
 
     await this.xking.methods.approve(this.lootbox.address, "100000" + e18).send(txOpts);
     await this.xking.methods.approve(this.claimBounty.address, "100000" + e18).send(txOpts);
@@ -110,9 +118,9 @@ contract("LootBox", (accounts) => {
     });
 
     const bounty = [{
-      availableQty: 33,
-      nfTokens: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60],
-      nftTokensQty: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      availableQty: 1,
+      nfTokens: new Array(60).fill(1).map((_, i) => i+1),
+      nftTokensQty:  new Array(60).fill(1),
       prize: 10000
     }]
 
@@ -141,19 +149,19 @@ contract("LootBox", (accounts) => {
         total = total + bal;
       }
 
-      if(count==1){
+      if(count===1){
         console.log("Balance of ID : " + i + " = " + bal + " Common");
         if(bal > 0){
           ctotal= ctotal + bal;
         }
       }
-      if(count==2){
+      if(count===2){
         console.log("Balance of ID : " + i + " = " + bal + " RARE");
         if(bal > 0){
           rtotal= rtotal + bal;
         }
       }
-      if(count==3){
+      if(count===3){
         console.log("Balance of ID : " + i + " = " + bal + " LEGENDARY");
         count = 0;
         if(bal > 0){
@@ -169,10 +177,10 @@ contract("LootBox", (accounts) => {
   });
 
   it("claiming Bounty", async () => {
-    const nftIds = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60];
-    const nftQty = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-    const nftQtyToClaim = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-    await this.kingERC1155.createBatch(accounts[1], nftIds, nftQty).send({ from: accounts[0] });
+    const nftIds = new Array(60).fill(1).map((_, i) => i+1);
+    const nftQty = new Array(60).fill(1);
+    const nftQtyToClaim = new Array(60).fill(1);
+    await this.kingERC1155.createBatch(accounts[1], nftIds, nftQty).send(txOpts);
     await this.claimBounty.claim(1, nftIds, nftQtyToClaim, { from: accounts[1] });
 
     assert.equal(await this.kingERC1155.balanceOf(accounts[1], 1).call(), '9');
