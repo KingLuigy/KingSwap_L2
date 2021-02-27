@@ -40,6 +40,8 @@ contract LootBox is Ownable, Pausable, ReentrancyGuard {
 
     uint256 public totalNftType = 60;
 
+    event Open(uint256[] ids);
+
     constructor(
         address  _treasury,
         IKingERC1155 _erc1155,
@@ -86,7 +88,7 @@ contract LootBox is Ownable, Pausable, ReentrancyGuard {
         }
         xking.transferFrom(msg.sender, treasury, amountToPool);
         erc1155.mintBatch(msg.sender, ids, amounts, "");
-
+        emit Open(ids);
         return(ids);
     }
 
@@ -119,7 +121,7 @@ contract LootBox is Ownable, Pausable, ReentrancyGuard {
         }
         xking.transferFrom(msg.sender, treasury, amountToPool);
         erc1155.mintBatch(msg.sender, ids, amounts, "");
-
+        emit Open(ids);
         return(ids);
     }
 
@@ -151,7 +153,7 @@ contract LootBox is Ownable, Pausable, ReentrancyGuard {
         }
         xking.transferFrom(msg.sender, treasury, amountToPool);
         erc1155.mintBatch(msg.sender, ids, amounts, "");
-
+        emit Open(ids);
         return(ids);
     }
 
@@ -189,7 +191,7 @@ contract LootBox is Ownable, Pausable, ReentrancyGuard {
         }
         oldKing.transferFrom(msg.sender, treasury, amountToPool);
         erc1155.mintBatch(msg.sender, ids, amounts, "");
-
+        emit Open(ids);
         return(ids);
     }
 
@@ -223,6 +225,7 @@ contract LootBox is Ownable, Pausable, ReentrancyGuard {
         }
         oldKing.transferFrom(msg.sender, treasury, amountToPool);
         erc1155.mintBatch(msg.sender, ids, amounts, "");
+        emit Open(ids);
         return(ids);
     }
 
@@ -255,6 +258,7 @@ contract LootBox is Ownable, Pausable, ReentrancyGuard {
         }
         oldKing.transferFrom(msg.sender,treasury,amountToPool);
         erc1155.mintBatch(msg.sender,ids,amounts, "");
+        emit Open(ids);
         return(ids);
     }
 
