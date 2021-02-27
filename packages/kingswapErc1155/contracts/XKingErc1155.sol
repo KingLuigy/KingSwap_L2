@@ -126,12 +126,11 @@ contract XKingERC1155 is
         requireNonZeroTo(_initialOwner);
 
         uint256 n = _initialSupplies.length;
-        uint256 _nextId = _getNextTokenID();
-        _firstId = _nextId;
+        _firstId = _getNextTokenID();
         _lastId = _firstId + n;
 
         for (uint256 i = 0; i < n; i++) {
-            _mint(_initialOwner, _nextId + i, _initialSupplies[i], _data);
+            _mint(_initialOwner, _firstId + i, _initialSupplies[i], _data);
         }
         _incrementTokenTypeId(n);
     }

@@ -10,27 +10,30 @@ const xoKingTokenAbi = require("../resources/kingswap_l2/xkingtoken/XoKingTokenM
 const _debug = false;
 
 contract("LootBox", (accounts) => {
+  const [ deployer, creator, , alice ] = accounts
+
   const e18 = "000000000000000000";
-  const getTxOpts = (opts = {}) => Object.assign({ from: accounts[0], gas: 5000000 }, opts)
+  const getTxOpts = (opts = {}) => Object.assign({ from: deployer, gas: 5000000 }, opts)
 
   beforeEach(async () => {
     this.xking = await (
         new web3.eth.Contract(xKingTokenAbi.abi, { data: xKingTokenAbi.bytecode })
     ).deploy().send(getTxOpts());
-    await this.xking.methods._mintMock(accounts[0], `${100e6}` + e18).send(getTxOpts());
+    await this.xking.methods._mintMock(deployer, `${100e6}` + e18).send(getTxOpts());
 
     this.xoldking = await (
         new web3.eth.Contract(xoKingTokenAbi.abi, { data: xoKingTokenAbi.bytecode })
     ).deploy().send(getTxOpts());
-    await this.xoldking.methods._mintMock(accounts[0], `${100e6}` + e18).send(getTxOpts());
+    await this.xoldking.methods._mintMock(deployer, `${100e6}` + e18).send(getTxOpts());
 
     this.kingERC1155 = await (
         new web3.eth.Contract(xKingErc1155Abi.abi, { data: xKingErc1155Abi.bytecode })
-    ).deploy().send({from: accounts[1], gas: 5000000})
-    await this.kingERC1155.methods._simulateEip1967Proxy(accounts[0]).send(getTxOpts());
+    ).deploy().send({from: alice, gas: 5000000})
+    await this.kingERC1155.methods._simulateEip1967Proxy(deployer).send(getTxOpts());
+    await this.kingERC1155.methods.initialize().send(getTxOpts());
 
     this.lootbox = await LootBox.new(
-        accounts[0],
+        deployer,
         this.kingERC1155.options.address,
         this.xking.options.address,
         this.xoldking.options.address,
@@ -73,16 +76,18 @@ contract("LootBox", (accounts) => {
 
     this.claimBounty = await ClaimBounty.new(
         this.kingERC1155.options.address,
-        accounts[0],
+        deployer,
         this.xking.options.address,
         getTxOpts()
     );
 
     await this.kingERC1155.methods.setCreator(this.lootbox.address, true).send(getTxOpts());
-    await this.kingERC1155.methods.setCreator(accounts[0], true).send(getTxOpts());
+    await this.kingERC1155.methods.setCreator(creator, true).send(getTxOpts());
     await this.kingERC1155.methods.setCreator(this.claimBounty.address, true).send(getTxOpts());
 
-    await this.kingERC1155.methods.createBatch(accounts[0], new Array(60).fill(0), []).send(getTxOpts());
+    await this.kingERC1155.methods.createBatch(
+        creator, new Array(60).fill(0), []
+    ).send(getTxOpts({from: creator}));
 
     await this.xking.methods.approve(this.lootbox.address, "100000" + e18).send(getTxOpts());
     await this.xking.methods.approve(this.claimBounty.address, "100000" + e18).send(getTxOpts());
@@ -90,11 +95,11 @@ contract("LootBox", (accounts) => {
     await this.xoldking.methods.approve(this.lootbox.address, "100000" + e18).send(getTxOpts());
     await this.xoldking.methods.approve(this.claimBounty.address, "100000" + e18).send(getTxOpts());
 
-    await this.xking.methods.transfer(accounts[1], "1000" + e18).send(getTxOpts())
-    this.xking.methods.approve(this.lootbox.address, "1000" + e18).send({ from: accounts[1] })
+    await this.xking.methods.transfer(alice, "1000" + e18).send(getTxOpts())
+    this.xking.methods.approve(this.lootbox.address, "1000" + e18).send({ from: alice })
 
-    await this.xoldking.methods.transfer(accounts[1], "1000" + e18).send(getTxOpts())
-    this.xoldking.methods.approve(this.lootbox.address, "1000" + e18).send({ from: accounts[1] })
+    await this.xoldking.methods.transfer(alice, "1000" + e18).send(getTxOpts())
+    this.xoldking.methods.approve(this.lootbox.address, "1000" + e18).send({ from: alice })
 
     const bounty = [{
       availableQty: 1,
@@ -110,11 +115,11 @@ contract("LootBox", (accounts) => {
     const erc1155 = await this.lootbox.erc1155();
     const treasury = await this.lootbox.treasury();
     assert.equal(erc1155, this.kingERC1155.options.address,);
-    assert.equal(treasury, accounts[0]);
+    assert.equal(treasury, deployer);
   });
 
   it("Try Open Lootbox and receive ERC1155 Randomly", async () => {
-    await this.lootbox.openThreeOldKing(accounts[1], { from: accounts[0] });
+    await this.lootbox.openThreeOldKing(alice, { from: deployer });
     let i;
     let count = 0;
     let total = 0;
@@ -122,7 +127,7 @@ contract("LootBox", (accounts) => {
     let ctotal = 0;
     let ltotal = 0;
     for (i = 0; i <= 60; i++) {
-      const bal = await this.kingERC1155.methods.balanceOf(accounts[0], i).call();
+      const bal = await this.kingERC1155.methods.balanceOf(deployer, i).call();
       if(bal > 0){
         total = total + bal;
       }
@@ -155,16 +160,18 @@ contract("LootBox", (accounts) => {
   });
 
   it("claiming Bounty", async () => {
-    const tokensAmounts = new Array(60).fill(1);
-    await this.kingERC1155.methods.createBatch(accounts[1], tokensAmounts, []).send(getTxOpts());
+    const tokensIds = new Array(60).fill(1).map((_, i) => i+1);
+    const tokensAmounts = new Array(60).fill(10);
+    await this.kingERC1155.methods.mintBatch(alice, tokensIds, tokensAmounts, []).send(getTxOpts({from: creator}));
+    assert.equal(await this.kingERC1155.methods.balanceOf(alice, 45).call(), '10');
 
-    await this.kingERC1155.methods.setApprovalForAll(this.claimBounty.address, true).send({ from: accounts[1] });
-    await this.claimBounty.claim(1, { from: accounts[1] });
+    await this.kingERC1155.methods.setApprovalForAll(this.claimBounty.address, true).send({ from: alice });
+    await this.claimBounty.claim(1, getTxOpts({ from: alice }));
 
-    assert.equal(await this.kingERC1155.methods.balanceOf(accounts[1], 1).call(), '9');
-    assert.equal(await this.kingERC1155.methods.balanceOf(accounts[1], 2).call(), '9');
-    assert.equal(await this.kingERC1155.methods.balanceOf(accounts[1], 3).call(), '9');
-    if (_debug) console.log("Balance of Account[1] :" + await this.xking.methods.balanceOf(accounts[1]).call());
-    assert.equal(await this.xking.methods.balanceOf(accounts[1]).call(), '1000000000000000010000');
+    assert.equal(await this.kingERC1155.methods.balanceOf(alice, 1).call(), '9');
+    assert.equal(await this.kingERC1155.methods.balanceOf(alice, 2).call(), '9');
+    assert.equal(await this.kingERC1155.methods.balanceOf(alice, 3).call(), '9');
+    if (_debug) console.log("XKing Balance of Alice :" + await this.xking.methods.balanceOf(alice).call());
+    assert.equal(await this.xking.methods.balanceOf(alice).call(), '1000000000000000010000');
   });
 })
