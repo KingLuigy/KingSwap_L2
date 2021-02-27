@@ -46,14 +46,16 @@ contract ClaimBounty is Ownable, Pausable {
         if (bt.availableQty != 255) {
             _bountiesTerms[termsId - 1].availableQty = bt.availableQty - 1;
         }
-        uint256[] memory ids;
-        uint256[] memory amounts;
+
+        uint256 n = bt.tokensIds.length;
+        uint256[] memory ids = new uint256[](n);
+        uint256[] memory amounts = new uint256[](n);
         for (uint256 i = 0; i < bt.tokensIds.length; i++) {
             ids[i] = uint256(bt.tokensIds[i]);
             amounts[i] = uint256(bt.tokensAmounts[i]);
         }
-
         erc1155.burnBatch(msg.sender, ids, amounts);
+
         prizeErc20.safeTransferFrom(treasury, msg.sender, bt.prize);
     }
 
