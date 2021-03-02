@@ -4,6 +4,13 @@
   "main": "index.js",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "test": "./scripts/test.sh tests/*.js",
+    "clean": "rm -fr build/contracts",
+    "build": "npm run clean && npm run compile",
+    "compile": "npx truffle compile"
+  },
   "dependencies": {
+    "@openzeppelin/contracts": "^3.4.0"
   }
 }
