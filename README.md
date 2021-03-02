@@ -12,8 +12,10 @@ This is a monorepo containing all packages related to the "KingSwap Layer2 DApp"
 | [xKingToken](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/xKingToken/ ) | ERC20 (ERC677) token on xDai network - the replica of the \$KING token |
 | [kingswapBridge](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapBridge/ ) | Mediators for the xDai <-> Ethereum bridge |
 | [kingswapErc1155](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapErc1155/ ) | ERC1155 tokens for xDai (original) and Ethereum (replica) networks |
-| [kingswapUni](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapUni/ ) | Uniswap v2 (SakeSwap version) clone to run on the xDai network |
-| [kingswapV3](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapV3/ ) | KingSwap V2 staking/deposit smart contracts to run on the xDai network |
+| [kingswapUni-v2-core](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapUni-v2-core/ ) | Uniswap v2 (SakeSwap version) clone to run on the xDai network |
+| [kingswapUni-v2-periphery](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapUni-v2-periphery/ ) | Uniswap v2 (SakeSwap version) clone to run on the xDai network |
+| [kingswapV3](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kingswapV3/ ) | KingSwap V2 farming/staking/deposit smart contracts to run on the xDai network |
+| [kswCollectibles](https://gihub.com/KingLuigy/KingSwap_V3/tree/master/packages/kswCollectibles/ ) | KingSwap Collectables (Card Games) to run on the xDai network |
 
 ## Development
 ### Requirements
