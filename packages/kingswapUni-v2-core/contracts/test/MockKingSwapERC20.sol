@@ -3,8 +3,8 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "../KingSwapERC20.sol";
 
-contract _mockMint is KingSwapERC20 {
-    function _mockMint(address to, uint value) internal {
+contract MockKingSwapERC20 is KingSwapERC20 {
+    function _mockMint(address to, uint value) external {
         _mint(to, value);
     }
 }

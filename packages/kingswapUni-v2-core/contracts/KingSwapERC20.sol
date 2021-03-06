@@ -9,6 +9,8 @@ contract KingSwapERC20 {
     string public constant name = "KingSwap LP Token";
     string public constant symbol = "KLP";
     uint8 public constant decimals = 18;
+    string public constant version = "1";
+
     uint  public totalSupply;
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
@@ -30,7 +32,7 @@ contract KingSwapERC20 {
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256(bytes(name)),
-                keccak256(bytes("1")),
+                keccak256(bytes(version)),
                 chainId,
                 address(this)
             )
