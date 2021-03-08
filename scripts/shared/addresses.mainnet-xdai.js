@@ -42,4 +42,9 @@ module.exports = {
   // ERC1155 on the side-chain (original tokens)
   xErc1155Address: '0xe26e5c3297e00321683Ca5aB242A77bef947E3e9', // proxy
   xErc1155ImplAddress: '0xD268e1D0d7EfF481A989772988B00e2Bb3d90685', // implementation
+
+  // KingSwapFactory on the side-chain
+  xKingSwapFactory: '0x977cFffecE847529190e6771DfEacDd7B5659f9B',
+  // WETH on the side-chain
+  xWETH: '0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1'
 }

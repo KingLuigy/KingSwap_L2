@@ -2,14 +2,17 @@
   "name": "KingSwapUni-v2-periphery",
   "version": "0.0.1",
   "main": "index.js",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "private": true,
   "scripts": {
     "test": "./scripts/test.sh tests/*.js",
-    "clean": "rm -fr build/contracts",
-    "build": "npm run clean && npm run compile",
+    "clean": "rm -fr build/contracts; rm -fr contracts/NetworkParams.sol",
+    "build": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network mainnet-xdai && npm run compile",
     "compile": "npx truffle compile"
   },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.10",
+    "chai-bignumber": "^3.0.0"
   }
 }
