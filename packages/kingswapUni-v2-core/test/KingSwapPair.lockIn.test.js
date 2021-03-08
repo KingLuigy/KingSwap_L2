@@ -1,10 +1,13 @@
 const { expectRevert } = require('@openzeppelin/test-helpers');
+
+const { createSnapshot, revertToSnapshot } = require('./helpers/blockchain');
+
 const MockERC20 = artifacts.require('MockERC20');
 const KingSwapPair = artifacts.require('KingSwapPair');
 const KingSwapFactory = artifacts.require('KingSwapFactory');
 
 contract('KingSwapPair::lockIn', ([alice]) => {
-    beforeEach(async () => {
+    before(async () => {
         this.factory = await KingSwapFactory.new(alice);
         this.king = await MockERC20.new('100000000');
         this.uni = await MockERC20.new('100000000');
@@ -17,6 +20,15 @@ contract('KingSwapPair::lockIn', ([alice]) => {
         await this.uni.transfer(this.pair.address, '10000000');
     });
 
+    let snapshotId
+    beforeEach(async () => {
+        snapshotId = await createSnapshot();
+    })
+
+    afterEach(async () => {
+        await revertToSnapshot(snapshotId)
+    })
+
     context('lockedIn0 == true && lockedIn1 == false', () => {
         beforeEach(async () => {
             this.token0 = await this.pair.token0.call();
@@ -25,9 +37,10 @@ contract('KingSwapPair::lockIn', ([alice]) => {
         });
 
         it('Should allow swap on: (amount0Out == 0 && amount1Out != 0)', async () => {
-            let balanceBefore = await (await MockERC20.at(this.token1)).balanceOf(alice);
+            const token1 = await MockERC20.at(this.token1)
+            let balanceBefore = await token1.balanceOf(alice);
             await this.pair.swap('0', '10', alice, []);
-            let balanceAfter = await (await MockERC20.at(this.token1)).balanceOf(alice);
+            let balanceAfter = await token1.balanceOf(alice);
             assert.equal(balanceAfter.sub(balanceBefore), '10');
         });
 
@@ -76,9 +89,10 @@ contract('KingSwapPair::lockIn', ([alice]) => {
         });
 
         it('Should allow swap on: (amount0Out == 0 && amount1Out != 0)', async () => {
-            let balanceBefore = await (await MockERC20.at(this.token1)).balanceOf(alice);
+            const token1 = await MockERC20.at(this.token1)
+            let balanceBefore = await token1.balanceOf(alice);
             await this.pair.swap('0', '10', alice, []);
-            let balanceAfter = await (await MockERC20.at(this.token1)).balanceOf(alice);
+            let balanceAfter = await token1.balanceOf(alice);
             assert.equal(balanceAfter.sub(balanceBefore), '10');
         });
 
@@ -87,19 +101,22 @@ contract('KingSwapPair::lockIn', ([alice]) => {
         });
 
         it('Should allow swap on: (amount0Out != 0 && amount1Out != 0)', async () => {
-            let balance0Before = await (await MockERC20.at(this.token0)).balanceOf(alice);
-            let balance1Before = await (await MockERC20.at(this.token1)).balanceOf(alice);
+            const token0 = await MockERC20.at(this.token0)
+            const token1 = await MockERC20.at(this.token1)
+            let balance0Before = await token0.balanceOf(alice);
+            let balance1Before = await token1.balanceOf(alice);
             await this.pair.swap('10', '10', alice, []);
-            let balance0After = await (await MockERC20.at(this.token0)).balanceOf(alice);
-            let balance1After = await (await MockERC20.at(this.token1)).balanceOf(alice);
+            let balance0After = await token0.balanceOf(alice);
+            let balance1After = await token1.balanceOf(alice);
             assert.equal(balance0After.sub(balance0Before), '10');
             assert.equal(balance1After.sub(balance1Before), '10');
         });
 
         it('Should allow swap on: (amount0Out != 0 && amount1Out == 0)', async () => {
-            let balanceBefore = await (await MockERC20.at(this.token0)).balanceOf(alice);
+            const token0 = await MockERC20.at(this.token0)
+            let balanceBefore = await token0.balanceOf(alice);
             await this.pair.swap('10', '0', alice, []);
-            let balanceAfter = await (await MockERC20.at(this.token0)).balanceOf(alice);
+            let balanceAfter = await token0.balanceOf(alice);
             assert.equal(balanceAfter.sub(balanceBefore), '10');
         });
     });
@@ -124,9 +141,10 @@ contract('KingSwapPair::lockIn', ([alice]) => {
         });
 
         it('Should allow swap on: (amount0Out != 0 && amount1Out == 0)', async () => {
-            let balanceBefore = await (await MockERC20.at(this.token0)).balanceOf(alice);
+            const token0 = await MockERC20.at(this.token0)
+            let balanceBefore = await token0.balanceOf(alice);
             await this.pair.swap('10', '0', alice, []);
-            let balanceAfter = await (await MockERC20.at(this.token0)).balanceOf(alice);
+            let balanceAfter = await token0.balanceOf(alice);
             assert.equal(balanceAfter.sub(balanceBefore), '10');
         });
     });

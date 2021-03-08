@@ -1,11 +1,10 @@
 /* global web3 */
-const chai = require('chai');
-chai.use(require('chai-bignumber')());
-const { expect } = require('chai');
-
 const {
   constants: { ZERO_ADDRESS }, expectEvent, expectRevert, time: { advanceBlock, increaseTo }
 } = require('@openzeppelin/test-helpers');
+const { expect } = require('chai');
+
+const { createSnapshot, revertToSnapshot } = require('./helpers/blockchain');
 
 const KingSwapFactory = artifacts.require('KingSwapFactory');
 const KingSwapPair = artifacts.require('KingSwapPair');
@@ -14,8 +13,6 @@ const MockERC20 = artifacts.require('MockERC20');
 const { toBN } = web3.utils
 const e18 = '000000000000000000'
 const expandTo18Decimals = n => toBN(`${n}${e18}`)
-
-// import { mineBlock, encodePrice } from './shared/utilities'
 
 const MINIMUM_LIQUIDITY = toBN('1000')
 
@@ -30,7 +27,7 @@ contract('KingSwapPair', ([ owner,, wallet, other ]) => {
     gasLimit: 9999999
   }, opts)
 
-  beforeEach(async () => {
+  before(async () => {
     factory = await KingSwapFactory.new(owner)
     const tokenA =  await MockERC20.new(expandTo18Decimals(10000), { from: owner })
     const tokenB =  await MockERC20.new(expandTo18Decimals(10000), { from: owner })
@@ -45,6 +42,15 @@ contract('KingSwapPair', ([ owner,, wallet, other ]) => {
       token0 = tokenB
       token1 = tokenA
     }
+  })
+
+  let snapshotId
+  beforeEach(async () => {
+    snapshotId = await createSnapshot();
+  })
+
+  afterEach(async () => {
+    await revertToSnapshot(snapshotId)
   })
 
   it('mint', async () => {
@@ -174,7 +180,8 @@ contract('KingSwapPair', ([ owner,, wallet, other ]) => {
     await token1.transfer(pair.address, swapAmount)
     await advanceBlock()
     const rc = await pair.swap(expectedOutputAmount, 0, wallet, '0x', getMoreGas())
-    expect(rc.receipt.gasUsed).to.eq(105616)
+    const gasUsed = parseInt(rc.receipt.gasUsed)
+    expect(gasUsed > 100000 && gasUsed < 150000).to.be.eq(true)
   })
 
   it('burn', async () => {

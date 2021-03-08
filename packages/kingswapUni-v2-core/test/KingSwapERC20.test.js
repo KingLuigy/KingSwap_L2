@@ -1,11 +1,10 @@
 /* global web3 */
-const chai = require('chai');
-chai.use(require('chai-bignumber')());
-const { expect } = require('chai');
-
 const { constants: { MAX_UINT256 }, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
-const KingSwapERC20 = artifacts.require('MockKingSwapERC20');
+const { expect } = require('chai');
 const { ecsign } = require('ethereumjs-util');
+const { createSnapshot, revertToSnapshot } = require('./helpers/blockchain');
+
+const KingSwapERC20 = artifacts.require('MockKingSwapERC20');
 
 const { toBN, toHex, keccak256 } = web3.utils
 const { abi } = web3.eth;
@@ -26,18 +25,24 @@ contract('KingSwapERC20', ([wallet, other, relayer]) => {
     // Solidity' `assembly { chainId := chainid() }` returns '1' under ganache (which is buggy).
     // Therefore `chainId = await web3.eth.getChainId()` does not work in this test
     chainId = 1;
-  })
-
-  beforeEach(async () => {
     token = await KingSwapERC20.new()
     domainSeparator = getDomainSeparator(contractName, token.address, chainId)
     await token._mockMint(wallet, TOTAL_SUPPLY)
   })
 
+  let snapshotId
+  beforeEach(async () => {
+    snapshotId = await createSnapshot();
+  })
+
+  afterEach(async () => {
+    await revertToSnapshot(snapshotId)
+  })
+
   it('name, symbol, decimals, totalSupply, balanceOf, DOMAIN_SEPARATOR, PERMIT_TYPEHASH', async () => {
     expect(await token.name()).to.eq(contractName)
     expect(await token.symbol()).to.eq('KLP')
-    expect(await token.decimals()).to.be.bignumber.equal('18')
+    expect((await token.decimals()).toString()).to.be.eq('18')
     expect(await token.totalSupply()).to.be.bignumber.equal(TOTAL_SUPPLY)
     expect(await token.balanceOf(wallet)).to.be.bignumber.equal(TOTAL_SUPPLY)
     expect(await token.DOMAIN_SEPARATOR()).to.eq(domainSeparator)
