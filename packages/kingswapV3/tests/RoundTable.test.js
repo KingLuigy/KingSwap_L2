@@ -1,26 +1,20 @@
 const { expectRevert } = require('@openzeppelin/test-helpers');
-const KingToken = artifacts.require('KingToken');
+const MockERC677Token = artifacts.require('MockERC677Token');
 const RoundTable = artifacts.require('RoundTable');
 
-contract('RoundTable', ([alice, bob, carol]) => {
+contract('RoundTable', ([ , alice, bob, carol]) => {
     beforeEach(async () => {
-        this.king = await KingToken.new({ from: alice });
-        this.table = await RoundTable.new(this.king.address, { from: alice });
-        this.king.mint(alice, '100', { from: alice });
-        this.king.mint(bob, '100', { from: alice });
-        this.king.mint(carol, '100', { from: alice });
+        this.king = await MockERC677Token.new(0);
+        this.table = await RoundTable.new(this.king.address);
+        this.king._mockMint(alice, '100');
+        this.king._mockMint(bob, '100');
+        this.king._mockMint(carol, '100');
     });
 
     it('should not allow enter if not enough approve', async () => {
-        await expectRevert(
-            this.table.enter('100', { from: alice }),
-            'ERC20: transfer amount exceeds allowance',
-        );
+        await expectRevert.unspecified(this.table.enter('100', { from: alice }));
         await this.king.approve(this.table.address, '50', { from: alice });
-        await expectRevert(
-            this.table.enter('100', { from: alice }),
-            'ERC20: transfer amount exceeds allowance',
-        );
+        await expectRevert.unspecified(this.table.enter('100', { from: alice }));
         await this.king.approve(this.table.address, '100', { from: alice });
         await this.table.enter('100', { from: alice });
         assert.equal((await this.table.balanceOf(alice)).valueOf(), '100');
@@ -29,10 +23,7 @@ contract('RoundTable', ([alice, bob, carol]) => {
     it('should not allow withraw more than what you have', async () => {
         await this.king.approve(this.table.address, '100', { from: alice });
         await this.table.enter('100', { from: alice });
-        await expectRevert(
-            this.table.leave('200', { from: alice }),
-            'ERC20: burn amount exceeds balance',
-        );
+        await expectRevert.unspecified(this.table.leave('200', { from: alice }));
     });
 
     it('should work with more than one participant', async () => {

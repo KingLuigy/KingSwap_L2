@@ -13,7 +13,7 @@ import "./libraries/SafeMath32.sol";
 // Note that it's ownable and the owner wields tremendous power. The ownership
 // will be transferred to a governance smart contract once $KING is sufficiently
 // distributed and the community can show to govern itself.
-contract ArchbishopV2 is Ownable, ReentrancyGuard {
+contract ArchbishopV3 is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeMath96 for uint96;
     using SafeMath32 for uint32;
@@ -345,7 +345,7 @@ contract ArchbishopV2 is Ownable, ReentrancyGuard {
         PoolInfo storage pool = poolInfo[pid];
         UserInfo storage user = userInfo[pid][msg.sender];
 
-        uint256 preLptAmount = user.wAmount;
+        uint256 preLptAmount = user.lptAmount;
         require(preLptAmount >= lptAmount, "withdraw: LP amount not enough");
 
         user.lptAmount = preLptAmount.sub(lptAmount);

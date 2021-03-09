@@ -1,18 +1,18 @@
 const { expectRevert } = require('@openzeppelin/test-helpers');
-const KingToken = artifacts.require('KingToken');
+const MockERC677Token = artifacts.require('MockERC677Token');
 const KingServant = artifacts.require('KingServant');
 const MockERC20 = artifacts.require('MockERC20');
-const KingSwapPair = artifacts.require('KingSwapPair');
-const KingSwapFactory = artifacts.require('KingSwapFactory');
+const { abi: pairAbi } = require('../resources/kingswapUni-v2-core/KingSwapPair.json');
+const { abi: factoryAbi, bytecode: factoryCode } = require('../resources/kingswapUni-v2-core/KingSwapFactory.json');
 
 contract('KingServant', ([alice, table, minter]) => {
     beforeEach(async () => {
         this.factory = await KingSwapFactory.new(alice, { from: alice });
-        this.king = await KingToken.new({ from: alice });
-        await this.king.mint(minter, '100000000', { from: alice });
-        this.weth = await MockERC20.new('WETH', 'WETH', '100000000', { from: minter });
-        this.token1 = await MockERC20.new('TOKEN1', 'TOKEN', '100000000', { from: minter });
-        this.token2 = await MockERC20.new('TOKEN2', 'TOKEN2', '100000000', { from: minter });
+        this.king = await KingToken.new(0, { from: alice });
+        await this.king._mockMint(minter, '100000000', { from: alice });
+        this.weth = await MockERC20.new('100000000', { from: minter });
+        this.token1 = await MockERC20.new('100000000', { from: minter });
+        this.token2 = await MockERC20.new('100000000', { from: minter });
         this.servant = await KingServant.new(this.factory.address, table, this.king.address, this.weth.address);
         this.kingWETH = await KingSwapPair.at((await this.factory.createPair(this.weth.address, this.king.address)).logs[0].args.pair);
         this.wethToken1 = await KingSwapPair.at((await this.factory.createPair(this.weth.address, this.token1.address)).logs[0].args.pair);

@@ -1,16 +1,15 @@
 const { expectRevert } = require('@openzeppelin/test-helpers');
-const KingToken = artifacts.require('KingToken');
+const MockERC677Token = artifacts.require('MockERC677Token');
 const MockERC20 = artifacts.require('MockERC20');
-const KingSwapPair = artifacts.require('KingSwapPair');
-const KingSwapFactory = artifacts.require('KingSwapFactory');
+const { abi: pairAbi } = require('../resources/kingswapUni-v2-core/KingSwapPair.json');
+const { abi: factoryAbi, bytecode: factoryCode } = require('../resources/kingswapUni-v2-core/KingSwapFactory.json');
 const CourtJester = artifacts.require('CourtJester');
 
 contract('CourtJester', ([alice, bob]) => {
     beforeEach(async () => {
         this.factory = await KingSwapFactory.new(alice, { from: alice });
-        this.king = await KingToken.new({ from: alice });
-        await this.king.mint(alice, '100000000', { from: alice });
-        this.uni = await MockERC20.new('UNI', 'UNI', '100000000', { from: alice });
+        this.king = await MockERC677Token.new('100000000', { from: alice });
+        this.uni = await MockERC20.new('100000000', { from: alice });
         this.kinguni = await KingSwapPair.at((await this.factory.createPair(this.king.address, this.uni.address)).logs[0].args.pair);
         this.blackHoldAddress = '0000000000000000000000000000000000000001';
         this.CourtJester = await CourtJester.new(this.factory.address, this.king.address, this.uni.address);
