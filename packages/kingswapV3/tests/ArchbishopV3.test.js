@@ -1,12 +1,21 @@
 const { expectRevert, time } = require('@openzeppelin/test-helpers');
+const { ecsign } = require('ethereumjs-util');
+
 const { createSnapshot, revertToSnapshot } = require('./helpers/blockchain');
+const { getDomainSeparator } = require('./helpers/signUtils');
 
 const MockERC677Token = artifacts.require('MockERC677Token');
 const ArchbishopV3 = artifacts.require('ArchbishopV3');
 const MockERC20 = artifacts.require('MockERC20');
 
+const { keccak256 } = web3.utils
+const { abi } = web3.eth;
+
 contract('ArchbishopV3', ([ deployer, alice, bob, carol, courtJester, kingServant, minter]) => {
     const e18 = '000000000000000000';
+    const contractName = 'ArchbishopV3'
+    const chainId = 1; // Solidity' `assembly { chainId := chainid() }` returns '1' under ganache (which is buggy).
+    let domainSeparator
 
     before(async () => {
         this.king = await MockERC677Token.new('0');
@@ -19,6 +28,7 @@ contract('ArchbishopV3', ([ deployer, alice, bob, carol, courtJester, kingServan
             `${this.testStartBlock}`,
             '100' // _withdrawInterval
         );
+        domainSeparator = getDomainSeparator(contractName, this.archV3.address, chainId)
 
         await this.king._mockMint(this.archV3.address, '5000'+e18);
 
@@ -516,6 +526,92 @@ contract('ArchbishopV3', ([ deployer, alice, bob, carol, courtJester, kingServan
             assert.equal((await archV3.userInfo(0, alice)).wAmount.toString(), '0');
             assert.equal((await archV3.userInfo(0, alice)).stAmount.toString(), '0');
             assert.equal((await archV3.userInfo(0, alice)).lptAmount.toString(), '0');
+        });
+
+        context('Meta-transactions', () => {
+            const carolPrivKey = '6b9e71ba9d19287ccc998fdbb43ad4ab0c213a6acfe16b358bf7555bf8080380';
+
+            before(async() => {
+                expect(carol.toLowerCase(), 'private key does not match')
+                    .to.be.eq(web3.eth.accounts.privateKeyToAccount(carolPrivKey).address.toLowerCase());
+
+                const lp = await MockERC20.new('1005', { from: minter });
+                await lp.transfer(carol, '1003', { from: minter });
+                await lp.approve(this.archV3.address, '1003', { from: carol });
+
+                const sToken = await MockERC20.new("105", { from: minter });
+                await sToken.transfer(carol, '102', { from: minter });
+                await sToken.approve(this.archV3.address, '102', { from: carol });
+
+                await this.archV3.add('100', '500', lp.address, sToken.address, true);
+            });
+
+            it('DOMAIN_SEPARATOR', async () => {
+                expect(await this.archV3.DOMAIN_SEPARATOR()).to.be.eq(domainSeparator);
+            })
+
+            it('depositBySig', async () => {
+                const DEPOSIT_TYPEHASH = keccak256(
+                    "Deposit(address user,uint256 pid,uint256 lptAmount,uint256 stAmount,uint256 nonce,uint256 deadline)"
+                );
+                const nonce = (await this.archV3.nonces(carol)).toString();
+                const deadline = `${100 + (await time.latest())}`;
+
+                const message = '0x' + [
+                    '0x1901',
+                    domainSeparator,
+                    keccak256(
+                        abi.encodeParameters(
+                            ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256'],
+                            [DEPOSIT_TYPEHASH, carol, '0', '1003', '102', nonce, deadline]
+                        )
+                    )
+                ].map( s => s.replace('0x', '')).join('');
+                const digest = keccak256(message);
+
+                const { v, r, s } = ecsign(
+                    Buffer.from(digest.replace('0x', ''), 'hex'),
+                    Buffer.from(carolPrivKey.replace('0x', ''), 'hex')
+                );
+
+                await this.archV3.depositBySig(carol, '0', '1003', '102', deadline, v, r, s, { from: bob });
+
+                assert.equal((await this.archV3.userInfo(0, carol)).lptAmount.toString(), '1003');
+                assert.equal((await this.archV3.userInfo(0, carol)).stAmount.toString(), '102');
+            })
+
+            it('withdrawBySig', async () => {
+                await this.archV3.deposit('0', '1003', '102', { from: carol });
+                assert.equal((await this.archV3.userInfo(0, carol)).lptAmount.toString(), '1003');
+
+                const WITHDRAW_TYPEHASH = keccak256(
+                    "Withdraw(address user,uint256 pid,uint256 lptAmount,uint256 nonce,uint256 deadline)"
+                );
+                const nonce = (await this.archV3.nonces(carol)).toString();
+                const deadline = `${100 + (await time.latest())}`;
+
+                const message = '0x' + [
+                    '0x1901',
+                    domainSeparator,
+                    keccak256(
+                        abi.encodeParameters(
+                            ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+                            [WITHDRAW_TYPEHASH, carol, '0', '502', nonce, deadline]
+                        )
+                    )
+                ].map( s => s.replace('0x', '')).join('');
+                const digest = keccak256(message)
+
+                const { v, r, s } = ecsign(
+                    Buffer.from(digest.replace('0x', ''), 'hex'),
+                    Buffer.from(carolPrivKey.replace('0x', ''), 'hex')
+                );
+
+                await this.archV3.withdrawBySig(carol, '0', '502', deadline, v, r, s, { from: bob });
+
+                assert.equal((await this.archV3.userInfo(0, carol)).lptAmount.toString(), '501');
+                assert.equal((await this.archV3.userInfo(0, carol)).stAmount.toString(), '0');
+            })
         });
     });
 });

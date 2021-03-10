@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./libraries/SafeMath96.sol";
 import "./libraries/SafeMath32.sol";
+import "./libraries/Signing.sol";
 
 // Archbishop will crown the King and he is a fair guy...
 //
@@ -19,6 +20,21 @@ contract ArchbishopV3 is Ownable, ReentrancyGuard {
     using SafeMath32 for uint32;
 
     using SafeERC20 for IERC20;
+
+    string public constant version = "1";
+    // The name of the contract
+    string public constant name = "ArchbishopV3";
+
+    // EIP712 niceties
+    bytes32 public constant DOMAIN_TYPEHASH = keccak256(
+        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+    );
+    bytes32 public constant DEPOSIT_TYPEHASH = keccak256(
+        "Deposit(address user,uint256 pid,uint256 lptAmount,uint256 stAmount,uint256 nonce,uint256 deadline)"
+    );
+    bytes32 public constant WITHDRAW_TYPEHASH = keccak256(
+        "Withdraw(address user,uint256 pid,uint256 lptAmount,uint256 nonce,uint256 deadline)"
+    );
 
     struct UserInfo {
         uint256 wAmount; // Weighted amount = lptAmount + (stAmount * pool.sTokenWeight)
@@ -84,6 +100,11 @@ contract ArchbishopV3 is Ownable, ReentrancyGuard {
     // Info of each user that stakes tokens
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
+    // EIP712 domain
+    bytes32 public DOMAIN_SEPARATOR;
+    // Mapping from a user address to the nonce for signing/validating signatures
+    mapping (address => uint256) public nonces;
+
     event Deposit(
         address indexed user,
         uint256 indexed pid,
@@ -113,6 +134,16 @@ contract ArchbishopV3 is Ownable, ReentrancyGuard {
         courtJester = _nonZeroAddr(_courtJester);
         startBlock = SafeMath32.fromUint(_startBlock);
         withdrawInterval = SafeMath32.fromUint(_withdrawInterval);
+
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                keccak256(bytes(name)),
+                keccak256(bytes(version)),
+                Signing.getChainId(),
+                address(this)
+            )
+        );
     }
 
     function setFarmingParams(
@@ -290,13 +321,46 @@ contract ArchbishopV3 is Ownable, ReentrancyGuard {
         uint256 lptAmount,
         uint256 stAmount
     ) public nonReentrant {
+        _deposit(msg.sender, pid, lptAmount, stAmount);
+    }
+
+    // Deposit on behalf of the `user` (user' signature required)
+    // (it sends to the `user` $KINGs pending by then)
+    function depositBySig(
+        address user,
+        uint256 pid,
+        uint256 lptAmount,
+        uint256 stAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public nonReentrant {
+        Signing.checkExpiry(deadline, block.timestamp);
+        uint256 nonce = nonces[user]++;
+        bytes32 digest;
+        {
+            bytes memory message = abi.encode(DEPOSIT_TYPEHASH, user, pid, lptAmount, stAmount, nonce, deadline);
+            digest = Signing.eip712Hash(DOMAIN_SEPARATOR, message);
+        }
+        Signing.verifySignature(user, digest, v, r, s);
+
+        _deposit(user, pid, lptAmount, stAmount);
+    }
+
+    function _deposit(
+        address _user,
+        uint256 pid,
+        uint256 lptAmount,
+        uint256 stAmount
+    ) internal {
         require(lptAmount != 0, "deposit: zero LP token amount");
         _validatePid(pid);
 
         _updatePool(pid);
 
         PoolInfo storage pool = poolInfo[pid];
-        UserInfo storage user = userInfo[pid][msg.sender];
+        UserInfo storage user = userInfo[pid][_user];
 
         uint256 oldStAmount = user.stAmount;
         uint96 pendingKingAmount = _accPending(
@@ -317,7 +381,7 @@ contract ArchbishopV3 is Ownable, ReentrancyGuard {
         uint32 _curBlock = curBlock();
         if (
             _sendKingToken(
-                msg.sender,
+                _user,
                 pendingKingAmount,
                 pool.kingLock,
                 _curBlock.sub(user.lastWithdrawBlock)
@@ -331,19 +395,46 @@ contract ArchbishopV3 is Ownable, ReentrancyGuard {
         }
         user.rewardDebt = _pending(user.wAmount, 0, pool.accKingPerShare);
 
-        pool.lpToken.safeTransferFrom(msg.sender, address(this), lptAmount);
+        pool.lpToken.safeTransferFrom(_user, address(this), lptAmount);
         if (stAmount != 0)
-            pool.sToken.safeTransferFrom(msg.sender, address(this), stAmount);
+            pool.sToken.safeTransferFrom(_user, address(this), stAmount);
 
-        emit Deposit(msg.sender, pid, lptAmount, stAmount);
+        emit Deposit(_user, pid, lptAmount, stAmount);
     }
 
     // Withdraw lptAmount of LP token and all pending $KING tokens
-    // (it burns all S tokens)
+    // (it burns all S tokens of the msg.sender)
     function withdraw(uint256 pid, uint256 lptAmount) public nonReentrant {
+        _withdraw(msg.sender, pid, lptAmount);
+    }
+
+    // Withdraw on behalf of the `user` (user' signature required)
+    // (it burns all S tokens of the user)
+    function withdrawBySig(
+        address user,
+        uint256 pid,
+        uint256 lptAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public nonReentrant {
+        Signing.checkExpiry(deadline, block.timestamp);
+        uint256 nonce = nonces[user]++;
+        bytes32 digest;
+        {
+            bytes memory message = abi.encode(WITHDRAW_TYPEHASH, user, pid, lptAmount, nonce, deadline);
+            digest = Signing.eip712Hash(DOMAIN_SEPARATOR, message);
+        }
+        Signing.verifySignature(user, digest, v, r, s);
+
+        _withdraw(user, pid, lptAmount);
+    }
+
+    function _withdraw(address _user, uint256 pid, uint256 lptAmount) internal {
         _validatePid(pid);
         PoolInfo storage pool = poolInfo[pid];
-        UserInfo storage user = userInfo[pid][msg.sender];
+        UserInfo storage user = userInfo[pid][_user];
 
         uint256 preLptAmount = user.lptAmount;
         require(preLptAmount >= lptAmount, "withdraw: LP amount not enough");
@@ -365,7 +456,7 @@ contract ArchbishopV3 is Ownable, ReentrancyGuard {
 
         if (
             _sendKingToken(
-                msg.sender,
+                _user,
                 pendingKingAmount,
                 pool.kingLock,
                 _curBlock.sub(user.lastWithdrawBlock)
@@ -379,8 +470,8 @@ contract ArchbishopV3 is Ownable, ReentrancyGuard {
 
         uint256 sentLptAmount = lptAmount == 0
             ? 0
-            : _sendLptAndBurnSt(msg.sender, pool, lptAmount, stAmount);
-        emit Withdraw(msg.sender, pid, sentLptAmount);
+            : _sendLptAndBurnSt(_user, pool, lptAmount, stAmount);
+        emit Withdraw(_user, pid, sentLptAmount);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
