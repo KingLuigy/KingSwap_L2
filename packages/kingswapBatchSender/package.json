@@ -1,0 +1,24 @@
+{
+  "name": "KingSwapBatchSender",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@openzeppelin/upgrades-core": "^1.5.0"
+  },
+  "devDependencies": {
+    "chai": "^4.3.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-bn": "^0.2.1",
+    "eth-gas-reporter": "^0.2.21"
+  },
+  "scripts": {
+    "test": "./scripts/test.sh tests/*.js",
+    "clean": "rm -fr build/contracts && rm -fr contracts/NetworkParams.sol",
+    "build:ksw": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network ksw-ksw && npx truffle compile",
+    "build:testnet": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network kovan-sokol && npx truffle compile",
+    "build:mainnet": "npm run clean && ./scripts/generate-NetworkParams_sol.js --network mainnet-xdai && npx truffle compile",
+    "compile": "npx truffle compile"
+  }
+}
