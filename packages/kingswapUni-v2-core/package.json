@@ -1,6 +1,6 @@
 {
   "name": "KingSwapUni-v2-core",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "index.js",
   "license": "GPL-3.0",
   "private": true,
@@ -10,7 +10,6 @@
     "build": "npm run clean && npm run compile",
     "compile": "npx truffle compile"
   },
-  "dependencies": {},
   "devDependencies": {
     "@openzeppelin/test-helpers": "^0.5.10",
     "chai-bignumber": "^3.0.0"
